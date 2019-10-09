@@ -1,4 +1,6 @@
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import sun.misc.BASE64Encoder;
+import sun.security.provider.X509Factory;
 
 import java.security.PrivateKey;
 import java.security.Security;
@@ -21,5 +23,10 @@ public class setUp {
         CertifcateSigner cs = new CertifcateSigner(csr.getCsr(),csr.getPair(),pk);
         cs.createCert();
         cs.print();
+
+//        cerFileGen cf = new cerFileGen();
+//        cf.genFile();
+
+//        KeyStore keyStore = new KeyStore(pk,selfSigner.getCert());
     }
 }

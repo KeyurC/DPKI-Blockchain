@@ -18,8 +18,12 @@ public class SelfSigner {
     //the keypair to sign CSRs.
     //For now just a way to test self signing
 
-    X509Certificate cert;
+    private X509Certificate[] cert = new X509Certificate[1];
     private PrivateKey RootPK;
+
+    public X509Certificate[] getCert() {
+         return cert;
+    }
 
     public SelfSigner() {
         try {
@@ -27,7 +31,7 @@ public class SelfSigner {
             keyGen.generate(2048);
             X509Certificate[] chain = new X509Certificate[1];
             chain[0]=keyGen.getSelfCertificate(new X500Name("CN=ROOT"), (long)365*24*3600);
-            cert = chain[0];
+            cert[0] = chain[0];
 
             RootPK = keyGen.getPrivateKey();
 
@@ -59,7 +63,7 @@ public class SelfSigner {
         try {
             BASE64Encoder encoder = new BASE64Encoder();
             System.out.println(X509Factory.BEGIN_CERT);
-            encoder.encodeBuffer(cert.getEncoded(), System.out);
+            encoder.encodeBuffer(cert[0].getEncoded(), System.out);
             System.out.println(X509Factory.END_CERT);
 
         } catch (CertificateEncodingException | IOException e) {
