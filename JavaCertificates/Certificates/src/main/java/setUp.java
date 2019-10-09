@@ -10,23 +10,26 @@ public class setUp {
         Security.addProvider(new BouncyCastleProvider());
 
         //Generates a CSR request
-        CertificateRequest csr = new CertificateRequest("CN=www.test.com");
-        csr.createCSR();
-        csr.print();
+//        CertificateRequest csr = new CertificateRequest("CN=www.test.com");
+//        csr.createCSR();
+//        csr.print();
 
         //Self signs and creates a certificate
         SelfSigner selfSigner = new SelfSigner();
         PrivateKey pk = selfSigner.getRootPK();
-        selfSigner.print();
+//        selfSigner.print();
 
         //Signs a CSR using a CA, which was self signed
-        CertifcateSigner cs = new CertifcateSigner(csr.getCsr(),csr.getPair(),pk);
-        cs.createCert();
-        cs.print();
+//        CertifcateSigner cs = new CertifcateSigner(csr.getCsr(),csr.getPair(),pk);
+//        cs.createCert();
+//        cs.print();
 
-//        cerFileGen cf = new cerFileGen();
-//        cf.genFile();
+        cerFileGen cf = new cerFileGen();
+        cf.genFile(selfSigner.getCert());
 
 //        KeyStore keyStore = new KeyStore(pk,selfSigner.getCert());
+        KeyStore keyStore = new KeyStore();
+        keyStore.KeyStoreImport(pk,selfSigner.getCert());
+        keyStore.loadCAKEY();
     }
 }
