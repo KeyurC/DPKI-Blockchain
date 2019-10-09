@@ -1,0 +1,1 @@
+This is an alternative way of creating certificates, which uses java and bouncy castle API instead of the openssl way I did earlier. I plan to further develop this to store the CA cert using a keystore.
