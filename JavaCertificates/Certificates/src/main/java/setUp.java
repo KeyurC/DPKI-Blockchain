@@ -10,26 +10,39 @@ public class setUp {
         Security.addProvider(new BouncyCastleProvider());
 
         //Generates a CSR request
-//        CertificateRequest csr = new CertificateRequest("CN=www.test.com");
-//        csr.createCSR();
-//        csr.print();
+        CertificateRequest csr = new CertificateRequest("CN=www.test.com,O=Daniel,OU=Nerd,C=DanielLand");
+        csr.createCSR();
+        csr.print();
 
+        KeyStore keyStore = new KeyStore();
+
+        System.out.println(keyStore.verifyCAExists());
+
+        if (!keyStore.verifyCAExists()) {
+            SelfSigner selfSigner = new SelfSigner();
+            PrivateKey pk = selfSigner.getRootPK();
+            cerFileGen cf = new cerFileGen();
+            cf.genFile(selfSigner.getCert());
+            keyStore.KeyStoreImport(pk,selfSigner.getCert());
+
+        }
         //Self signs and creates a certificate
-        SelfSigner selfSigner = new SelfSigner();
-        PrivateKey pk = selfSigner.getRootPK();
+//        SelfSigner selfSigner = new SelfSigner();
+//        PrivateKey pk = selfSigner.getRootPK();
 //        selfSigner.print();
 
         //Signs a CSR using a CA, which was self signed
-//        CertifcateSigner cs = new CertifcateSigner(csr.getCsr(),csr.getPair(),pk);
-//        cs.createCert();
-//        cs.print();
+        PrivateKey pk = (PrivateKey) keyStore.loadCAKEY();
+        CertifcateSigner cs = new CertifcateSigner(csr.getCsr(),csr.getPair(),pk);
+        cs.createCert();
+        cs.print();
 
-        cerFileGen cf = new cerFileGen();
-        cf.genFile(selfSigner.getCert());
+//        cerFileGen cf = new cerFileGen();
+//        cf.genFile(selfSigner.getCert());
 
 //        KeyStore keyStore = new KeyStore(pk,selfSigner.getCert());
-        KeyStore keyStore = new KeyStore();
-        keyStore.KeyStoreImport(pk,selfSigner.getCert());
-        keyStore.loadCAKEY();
+
+//        keyStore.KeyStoreImport(pk,selfSigner.getCert());
+//        keyStore.loadCAKEY();
     }
 }

@@ -2,8 +2,10 @@ import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import sun.misc.BASE64Encoder;
 import sun.security.provider.X509Factory;
 
+import javax.security.cert.CertificateException;
 import java.io.*;
 import java.security.Key;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
@@ -12,38 +14,51 @@ import java.security.cert.X509Certificate;
 
 public class KeyStore {
 
-    public void loadCAKEY() {
+    public Boolean verifyCAExists() {
         try {
-
-            ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-            PrintStream printStream = new PrintStream(outStream);
-
             FileInputStream is = new FileInputStream("PKIStore");
             java.security.KeyStore keyStore = java.security.KeyStore.getInstance(
                     java.security.KeyStore.getDefaultType()
             );
-            System.out.println("test");
+
+            keyStore.load(is,"Ironclad6!*".toCharArray());
+            if (keyStore.containsAlias("ROOT")) {
+               return true;
+            } else {
+                return false;
+            }
+
+        } catch (Exception e) {
+            System.out.println("ERROR" + e);
+        }
+
+        return false;
+    }
+
+    public Key loadCAKEY() {
+        try {
+            FileInputStream is = new FileInputStream("PKIStore");
+            java.security.KeyStore keyStore = java.security.KeyStore.getInstance(
+                    java.security.KeyStore.getDefaultType()
+            );
+//            System.out.println("test");
             keyStore.load(is,"Ironclad6!*".toCharArray());
 
             Key key = (PrivateKey) keyStore.getKey("privatekey","Ironclad6!*".toCharArray());
             Certificate cert = keyStore.getCertificate("ROOT");
             PublicKey publicKey = cert.getPublicKey();
 
-            BASE64Encoder encoder = new BASE64Encoder();
-            System.out.println(X509Factory.BEGIN_CERT);
-            encoder.encodeBuffer(cert.getEncoded(), System.out);
-            System.out.println(X509Factory.END_CERT);
-
             final StringWriter s = new StringWriter();
             try (JcaPEMWriter w = new JcaPEMWriter(s)) {
                 w.writeObject(key);
             }
-            System.out.println(s);
-
+//            System.out.println(s);
+            return key;
 
         } catch (Exception e) {
             System.out.println(e);
         }
+        return null;
     }
 
     public KeyStore() {}
@@ -56,7 +71,7 @@ public class KeyStore {
             java.security.KeyStore keyStore = java.security.KeyStore.getInstance(
                     java.security.KeyStore.getDefaultType()
             );
-            System.out.println("test");
+//            System.out.println("test");
             keyStore.load(is,"Ironclad6!*".toCharArray());
             String alias = "ROOT";
             char[] password = "Ironclad6!*".toCharArray();
@@ -80,7 +95,7 @@ public class KeyStore {
             try (JcaPEMWriter w = new JcaPEMWriter(s)) {
                 w.writeObject(privateKey);
             }
-            System.out.println(s);
+//            System.out.println(s);
 
             // Save the new keystore contents
             FileOutputStream out = new FileOutputStream(keystoreFile);
