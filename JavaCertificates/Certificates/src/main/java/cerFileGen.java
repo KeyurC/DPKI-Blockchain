@@ -8,14 +8,14 @@ import java.security.cert.X509Certificate;
 
 public class cerFileGen {
 
-    public void genFile(X509Certificate[] cert) {
+    public void genFile(X509Certificate[] cert, String name) {
         try {
 
-            PrintWriter writer = new PrintWriter("cert.cer");
+            PrintWriter writer = new PrintWriter("Certificates/"+name+".cer");
             try (JcaPEMWriter w = new JcaPEMWriter(writer)) {
                 w.writeObject(cert[0]);
             }
-            System.out.println(cert[0]);
+//            System.out.println(cert[0]);
             writer.close();
         } catch (Exception e) {
 

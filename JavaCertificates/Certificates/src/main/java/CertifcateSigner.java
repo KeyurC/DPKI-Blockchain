@@ -22,7 +22,6 @@ import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -39,6 +38,24 @@ public class CertifcateSigner {
     private PrivateKey caKey;
     private X509CertificateHolder cert;
 
+    public X509Certificate[] getCertChain() {
+        try {
+            //Temporary as regenerating the certificate, Not the best code
+            CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+            InputStream in = new ByteArrayInputStream(cert.getEncoded());
+            X509Certificate cert = (X509Certificate) certFactory.generateCertificate(in);
+
+            X509Certificate[] certificate = new X509Certificate[1];
+            certificate[0] = cert;
+
+            return certificate;
+
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return null;
+    }
+
     public CertifcateSigner(PKCS10 newPkcs10, KeyPair newKeyPair, PrivateKey newCaKey) {
         this.pkcs10 = newPkcs10;
         this.keyPair = newKeyPair;
@@ -47,6 +64,8 @@ public class CertifcateSigner {
 
     public void createCert() {
         try {
+
+
             AlgorithmIdentifier sigAlgId = new DefaultSignatureAlgorithmIdentifierFinder()
                     .find("SHA1withRSA");
             AlgorithmIdentifier digAlgId = new DefaultDigestAlgorithmIdentifierFinder()
@@ -58,7 +77,6 @@ public class CertifcateSigner {
             SubjectPublicKeyInfo keyInfo = SubjectPublicKeyInfo.getInstance(keyPair
                     .getPublic().getEncoded());
             PKCS10CertificationRequest pk10Holder = new PKCS10CertificationRequest(pkcs10.getEncoded());
-
 
             X509v3CertificateBuilder myCertificateGenerator = new X509v3CertificateBuilder(new org.bouncycastle.asn1.x500.X500Name("CN=ROOT"),
                     new BigInteger("1"), new Date(), new Date(), pk10Holder.getSubject(), keyInfo);
@@ -102,7 +120,7 @@ public class CertifcateSigner {
             System.out.println(X509Factory.END_CERT);
 
         } catch (IOException e) {
-
+            System.out.println("Issues printing certificate");
         }
     }
 }

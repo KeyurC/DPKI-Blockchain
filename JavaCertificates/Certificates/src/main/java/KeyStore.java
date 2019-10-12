@@ -1,17 +1,16 @@
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
-import sun.misc.BASE64Encoder;
-import sun.security.provider.X509Factory;
 
-import javax.security.cert.CertificateException;
 import java.io.*;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.security.*;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
+/**
+ * https://stackoverflow.com/questions/18889058/programmatically-import-ca-trust-cert-into-existing-keystore-file-without-using
+ * Borrowed snippets of this code in order to import certificates into the keystore
+ */
 public class KeyStore {
 
     public Boolean verifyCAExists() {
@@ -21,7 +20,7 @@ public class KeyStore {
                     java.security.KeyStore.getDefaultType()
             );
 
-            keyStore.load(is,"Ironclad6!*".toCharArray());
+            keyStore.load(is,"temp1234".toCharArray());
             if (keyStore.containsAlias("ROOT")) {
                return true;
             } else {
@@ -41,18 +40,12 @@ public class KeyStore {
             java.security.KeyStore keyStore = java.security.KeyStore.getInstance(
                     java.security.KeyStore.getDefaultType()
             );
-//            System.out.println("test");
-            keyStore.load(is,"Ironclad6!*".toCharArray());
 
-            Key key = (PrivateKey) keyStore.getKey("privatekey","Ironclad6!*".toCharArray());
+            keyStore.load(is,"temp1234".toCharArray());
+
+            Key key = keyStore.getKey("privatekey","temp1234".toCharArray());
             Certificate cert = keyStore.getCertificate("ROOT");
-            PublicKey publicKey = cert.getPublicKey();
 
-            final StringWriter s = new StringWriter();
-            try (JcaPEMWriter w = new JcaPEMWriter(s)) {
-                w.writeObject(key);
-            }
-//            System.out.println(s);
             return key;
 
         } catch (Exception e) {
@@ -61,26 +54,47 @@ public class KeyStore {
         return null;
     }
 
+    public void generateKeyStore() {
+        try {
+            java.security.KeyStore ks = java.security.KeyStore.getInstance(java.security.KeyStore.getDefaultType());
+            String password = "temp1234";
+            ks.load(null,password.toCharArray());
+
+            FileOutputStream outputStream = new FileOutputStream("PKIStore");
+            ks.store(outputStream,password.toCharArray());
+            outputStream.close();
+
+        } catch (KeyStoreException e) {
+            System.out.println("Error getting keystore object" + e);
+        } catch (IOException e) {
+            System.out.println("Check ks.load" + e);
+        } catch (NoSuchAlgorithmException e) {
+            System.out.println("Check ks.load" + e);
+        } catch (CertificateException e) {
+            System.out.println("Check ks.load" + e);
+        }
+    }
+
     public KeyStore() {}
 
-    public void KeyStoreImport(PrivateKey privateKey, X509Certificate[] cert) {
-        String certfile = "cert.cer";
+    public void KeyStoreImport(PrivateKey privateKey, X509Certificate[] cert,String location,String alias) {
 
         try {
             FileInputStream is = new FileInputStream("PKIStore");
             java.security.KeyStore keyStore = java.security.KeyStore.getInstance(
                     java.security.KeyStore.getDefaultType()
             );
-//            System.out.println("test");
-            keyStore.load(is,"Ironclad6!*".toCharArray());
-            String alias = "ROOT";
-            char[] password = "Ironclad6!*".toCharArray();
+
+            keyStore.load(is,"temp1234".toCharArray());
+
+            System.out.println(alias);
+
+            char[] password = "temp1234".toCharArray();
 
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            InputStream certstream = fullStream (certfile);
+            InputStream certstream = fullStream (location);
             Certificate certs =  cf.generateCertificate(certstream);
 
-            ///
             File keystoreFile = new File("PKIStore");
             // Load the keystore contents
             FileInputStream in = new FileInputStream(keystoreFile);
@@ -89,21 +103,24 @@ public class KeyStore {
 
             // Add the certificate
             keyStore.setCertificateEntry(alias, certs);
-            keyStore.setKeyEntry("PrivateKey",privateKey,password,cert);
+            if (alias.equals("ROOT")) {
+                keyStore.setKeyEntry("PrivateKey",privateKey,password,cert);
+            }
 
             final StringWriter s = new StringWriter();
             try (JcaPEMWriter w = new JcaPEMWriter(s)) {
                 w.writeObject(privateKey);
             }
-//            System.out.println(s);
 
             // Save the new keystore contents
             FileOutputStream out = new FileOutputStream(keystoreFile);
             keyStore.store(out, password);
             out.close();
 
+        } catch (IOException e) {
+
         } catch (Exception e) {
-            System.out.println(e);
+            System.out.println("this" + e);
         }
 
     }
