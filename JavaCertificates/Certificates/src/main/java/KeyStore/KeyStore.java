@@ -1,3 +1,5 @@
+package KeyStore;
+
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 
 import java.io.*;
@@ -88,9 +90,6 @@ public class KeyStore {
             String location = "Certificates/"+certName+".cer";
 
             Certificate certs = this.buildCertificate(location);
-
-            System.out.println("Keystore: " + certImported.hashCode());
-            System.out.println("NON - Keystore: " + certs.hashCode());
 
             if (certImported.hashCode() == certs.hashCode()) {
                 return true;

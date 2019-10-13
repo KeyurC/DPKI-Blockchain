@@ -1,3 +1,5 @@
+package RegistrationAuthority;
+
 import sun.security.pkcs10.PKCS10;
 import sun.security.x509.X500Name;
 
@@ -44,6 +46,8 @@ public class CertificateRequest {
         outStream = new ByteArrayOutputStream();
         printStream = new PrintStream(outStream);
         dn = newDN;
+        createCSR();
+        print();
     }
 
     /**

@@ -1,14 +1,6 @@
-import org.apache.commons.net.whois.WhoisClient;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+package RegistrationAuthority;
 
-import javax.management.Query;
-import java.io.BufferedReader;
-import java.io.StringReader;
-import java.net.URI;
-import java.net.URL;
+import Utility.WhoIsQuery;
 
 /**
  * Acts as a subordinate CA and verifies if the details entered

@@ -1,3 +1,5 @@
+package CertificateAuthority;
+
 import sun.misc.BASE64Encoder;
 import sun.security.provider.X509Factory;
 import sun.security.tools.keytool.CertAndKeyGen;

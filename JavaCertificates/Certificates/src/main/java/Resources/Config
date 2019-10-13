@@ -1,0 +1,17 @@
+[Config]
+//Make sure that the DN and WHOIS are in the correct order
+
+Start DN
+CN,Enter organisation common name e.g www.example.com
+O,Enter organisation name
+C,Enter organisation country e.g UK
+End
+
+Start WHOIS
+Domain Name
+Registrant Organization
+Registrant Country
+End
+
+//L,Enter town/city/state/province
+//Registrant State/Province

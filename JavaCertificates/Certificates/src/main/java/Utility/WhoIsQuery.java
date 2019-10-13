@@ -1,3 +1,5 @@
+package Utility;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -5,6 +7,7 @@ import org.jsoup.nodes.Element;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 
 /**
  * Class queries the whois website and
@@ -36,7 +39,9 @@ public class WhoIsQuery {
      * @return domain info
      */
     public String[] getDomainInfo() {
-        String[] data = new String[3];
+        Config config = Config.getInstance();
+        String[] data = new String[config.getWhois().size()];
+        ArrayList<String> whoissearch = config.getWhois();
         try {
             BufferedReader reader = new BufferedReader(new StringReader(domainInfo));
             String line = "";
@@ -44,14 +49,16 @@ public class WhoIsQuery {
 
 
             while ( (line=reader.readLine()) != null ) {
-                if (line.contains("Registrant Organization") |
-                        line.contains("Registrant Country") |
-                        line.contains("Domain Name")) {
-
-                    data[count++] = line.substring(line.indexOf(":") + 1);
+                for (int i =0; i < whoissearch.size(); i++) {
+                    if (line.contains(whoissearch.get(i))) {
+                        data[count++] = line.substring(line.indexOf(":") + 1);
+                    }
                 }
             }
 
+            for (int i = 0; i < data.length;i++) {
+                System.out.println(data[i]);
+            }
 
             return data;
         } catch (IOException e) {
