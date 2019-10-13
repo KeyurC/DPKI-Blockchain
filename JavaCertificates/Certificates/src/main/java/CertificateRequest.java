@@ -20,22 +20,35 @@ public class CertificateRequest {
     private PKCS10 csr;
     private KeyPair pair;
 
+    /**
+     * Returns the CSR
+     * @return CSR
+     */
     public PKCS10 getCsr() {
         return csr;
     }
 
+    /**
+     * Returns the private and public key
+     * @return KeyPair
+     */
     public KeyPair getPair() {
         return pair;
     }
 
+    /**
+     * Constructor of class
+     * @param newDN DN information
+     */
     public CertificateRequest(String newDN) {
         outStream = new ByteArrayOutputStream();
         printStream = new PrintStream(outStream);
         dn = newDN;
     }
 
-    private void generateKeys() {}
-
+    /**
+     * Generates a Certificate Request
+     */
     public void createCSR() {
         try {
             KeyPairGenerator keypair = KeyPairGenerator.getInstance("RSA");
@@ -43,6 +56,7 @@ public class CertificateRequest {
             Signature sig = Signature.getInstance("SHA1withRSA");
             KeyPair key = keypair.generateKeyPair();
             pair = key;
+            System.out.println(this.dn);
             X500Name x500Name = new X500Name(this.dn);
             sig.initSign(key.getPrivate());
             PKCS10 pkcs10 = new PKCS10(key.getPublic());
@@ -51,24 +65,21 @@ public class CertificateRequest {
 
 
         } catch (InvalidKeyException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (NoSuchAlgorithmException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (CertificateException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (SignatureException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
-//        return null;
     }
 
+    /**
+     * Prints the CSR
+     */
     public void print() {
         try {
             csr.print(printStream);

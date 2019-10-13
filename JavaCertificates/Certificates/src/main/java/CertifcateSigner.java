@@ -30,7 +30,7 @@ import java.util.Date;
 /**
  * Signs a CSR using a CA,
  * https://stackoverflow.com/questions/7230330/sign-csr-using-bouncy-castle
- * The stackoverflow I followed to sign a certificate using the PK of a CA
+ * The stackoverflow I followed to sign a certificate using a CA
  */
 public class CertifcateSigner {
     private PKCS10 pkcs10;
@@ -38,6 +38,22 @@ public class CertifcateSigner {
     private PrivateKey caKey;
     private X509CertificateHolder cert;
 
+    /**
+     * Class constructor
+     * @param newPkcs10 CSR
+     * @param newKeyPair KeyPair
+     * @param newCaKey CA private key
+     */
+    public CertifcateSigner(PKCS10 newPkcs10, KeyPair newKeyPair, PrivateKey newCaKey) {
+        this.pkcs10 = newPkcs10;
+        this.keyPair = newKeyPair;
+        this.caKey = newCaKey;
+    }
+
+    /**
+     * Function returns a X509Certificate chain.
+     * @return Certificate chain
+     */
     public X509Certificate[] getCertChain() {
         try {
             //Temporary as regenerating the certificate, Not the best code
@@ -56,16 +72,12 @@ public class CertifcateSigner {
         return null;
     }
 
-    public CertifcateSigner(PKCS10 newPkcs10, KeyPair newKeyPair, PrivateKey newCaKey) {
-        this.pkcs10 = newPkcs10;
-        this.keyPair = newKeyPair;
-        this.caKey = newCaKey;
-    }
-
+    /**
+     * Signs a CSR request and creates a certificate using CA
+     * private key
+     */
     public void createCert() {
         try {
-
-
             AlgorithmIdentifier sigAlgId = new DefaultSignatureAlgorithmIdentifierFinder()
                     .find("SHA1withRSA");
             AlgorithmIdentifier digAlgId = new DefaultDigestAlgorithmIdentifierFinder()
@@ -81,7 +93,6 @@ public class CertifcateSigner {
             X509v3CertificateBuilder myCertificateGenerator = new X509v3CertificateBuilder(new org.bouncycastle.asn1.x500.X500Name("CN=ROOT"),
                     new BigInteger("1"), new Date(), new Date(), pk10Holder.getSubject(), keyInfo);
 
-            //Keyinfo is the public key of the CSR
 
             ContentSigner sigGen = new BcRSAContentSignerBuilder(sigAlgId, digAlgId)
                     .build(CAPK);
@@ -90,14 +101,15 @@ public class CertifcateSigner {
 
 
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (OperatorCreationException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
 
+    /**
+     * Prints the certificate information in plan english.
+     */
     public void printDecoded() {
         try {
             Certificate eeX509CertificateStructure = cert.toASN1Structure();
@@ -112,6 +124,9 @@ public class CertifcateSigner {
         }
     }
 
+    /**
+     * Prints the certificate in base64
+     */
     public void print() {
         try {
             BASE64Encoder encoder = new BASE64Encoder();

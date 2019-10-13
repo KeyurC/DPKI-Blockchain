@@ -1,10 +1,15 @@
 import java.util.Scanner;
 
+/**
+ * Class gets the DN info provided by the user.
+ */
 public class UserData {
-    //CN=www.test.com,O=Daniel,OU=Nerd,C=DanielLand
-
     private String[] DN = new String[3];
 
+    /**
+     * Constructor of class which takes in inputs of user for the
+     * DN
+     */
     public UserData() {
         Scanner input = new Scanner(System.in);
 
@@ -18,19 +23,31 @@ public class UserData {
         this.DN[2] = "C="+input.nextLine();
     }
 
+    /**
+     * Returns the DN as an array
+     * @return DN array
+     */
     public String[] getDN() {
         return DN;
     }
 
+    /**
+     * Returns the DN as a String
+     * @return DN as string
+     */
     public String getDNToString() {
         String DNString = "";
         for (int i = 0; i < 2; i++) {
-            DNString += this.DN[i] + ",";
+            DNString += this.DN[i].replaceAll("[-+.^:,]","") + ",";
         }
         DNString += this.DN[this.DN.length-1];
         return DNString;
     }
 
+    /**
+     * Returns the organisation of the DN
+     * @return organisation
+     */
     public String getOrg() {
         return this.DN[1].substring(2);
     }

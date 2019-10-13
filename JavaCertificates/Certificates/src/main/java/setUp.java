@@ -1,13 +1,13 @@
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import sun.misc.BASE64Encoder;
-import sun.security.provider.X509Factory;
-
 import java.io.File;
 import java.security.PrivateKey;
 import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.util.Scanner;
 
+/**
+ * Set up class which runs all the other classes and methods
+ */
 public class setUp {
     public static void main(String[] args) {
         Security.addProvider(new BouncyCastleProvider());
@@ -64,10 +64,5 @@ public class setUp {
 
         }
 
-    }
-
-    public static String extractCN(X509Certificate[] cert) {
-        String DN = cert[0].getSubjectDN().toString();
-        return DN.substring(3,DN.indexOf(","));
     }
 }

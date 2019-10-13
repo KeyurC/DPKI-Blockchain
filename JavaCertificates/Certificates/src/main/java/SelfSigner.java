@@ -10,21 +10,29 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 /**
+ * This class generates a self signed certificate.
+ * The class in mainly used for the CA to be generated if one doesn't exist in
+ * the keystore.
+ *
  * https://www.pixelstech.net/article/1406724116-Generate-certificate-in-Java----Self-signed-certificate
  * was the tutorial used to self sign a certificate
  */
 public class SelfSigner {
-    //For the Root, Need to implement a way to store the root certificate and retrieve
-    //the keypair to sign CSRs.
-    //For now just a way to test self signing
 
     private X509Certificate[] cert = new X509Certificate[1];
     private PrivateKey RootPK;
 
+    /**
+     * Function returns the certificate
+     * @return Certificate chain
+     */
     public X509Certificate[] getCert() {
          return cert;
     }
 
+    /**
+     * Produces a self signed certificate
+     */
     public SelfSigner() {
         try {
             CertAndKeyGen keyGen = new CertAndKeyGen("RSA", "SHA1WithRSA",null);
@@ -55,11 +63,17 @@ public class SelfSigner {
 
     }
 
+    /**
+     * Returns the private key of the certificate
+     * @return Private Key of CA
+     */
     public PrivateKey getRootPK() {
         return RootPK;
     }
 
-
+    /**
+     * Prints the self signed certificate
+     */
     public void print() {
         try {
             BASE64Encoder encoder = new BASE64Encoder();
@@ -73,6 +87,9 @@ public class SelfSigner {
 
     }
 
+    /**
+     * Prints the self signed certificate in english
+     */
     public void printDecoded() {
         System.out.println("Certificate : "+cert.toString());
     }

@@ -8,19 +8,40 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
 /**
+ * This class handles anything to do with the keystore file e.g import/exporting and generation.
  * https://stackoverflow.com/questions/18889058/programmatically-import-ca-trust-cert-into-existing-keystore-file-without-using
- * Borrowed snippets of this code in order to import certificates into the keystore
+ * Learnt parts of the code from the link above.
  */
 public class KeyStore {
 
-    public Boolean verifyCAExists() {
+    private java.security.KeyStore keyStore;
+    private FileInputStream is;
+    private String store = "PKIStore";
+    private char[] password = "temp1234".toCharArray();
+
+    /**
+     * Creates an instance of keystore
+     */
+    public KeyStore() {
         try {
-            FileInputStream is = new FileInputStream("PKIStore");
-            java.security.KeyStore keyStore = java.security.KeyStore.getInstance(
+            keyStore = java.security.KeyStore.getInstance(
                     java.security.KeyStore.getDefaultType()
             );
+        } catch (KeyStoreException e) {
+            System.out.println("Error with establishing keystore\n" + e);
+        }
 
-            keyStore.load(is,"temp1234".toCharArray());
+    }
+
+    /**
+     * Function determines whether the CA certificate exists
+     * @return Returns true if CA certificate exists.
+     */
+    public Boolean verifyCAExists() {
+        try {
+            is = new FileInputStream(store);
+            keyStore.load(is,password);
+
             if (keyStore.containsAlias("ROOT")) {
                 return true;
             } else {
@@ -34,39 +55,39 @@ public class KeyStore {
         return false;
     }
 
+    /**
+     * The function exports the private key of the CA from
+     * the keystore.
+     * @return Private Key of CA
+     */
     public Key loadCAKEY() {
         try {
-            FileInputStream is = new FileInputStream("PKIStore");
-            java.security.KeyStore keyStore = java.security.KeyStore.getInstance(
-                    java.security.KeyStore.getDefaultType()
-            );
+            is = new FileInputStream(store);
+            keyStore.load(is,password);
 
-            keyStore.load(is,"temp1234".toCharArray());
-
-            Key key = keyStore.getKey("privatekey","temp1234".toCharArray());
-            Certificate cert = keyStore.getCertificate("ROOT");
-
+            Key key = keyStore.getKey("privatekey",password);
             return key;
 
         } catch (Exception e) {
-            System.out.println(e);
+            System.out.println("Error with loading CA key from keystore" + e);
         }
         return null;
     }
 
+    /**
+     * Function determines if the certificate in the keystore and the
+     * certificate provided are the same or not using their hash.
+     * @param certName Certificate Name
+     * @return Boolean if certificate is the same or not.
+     */
     public boolean verifyCertificate(String certName) {
         try {
-            FileInputStream is = new FileInputStream("PKIStore");
-            java.security.KeyStore keyStore = java.security.KeyStore.getInstance(
-                    java.security.KeyStore.getDefaultType()
-            );
-
-            keyStore.load(is,"temp1234".toCharArray());
+            is = new FileInputStream(store);
+            keyStore.load(is,password);
             Certificate certImported = keyStore.getCertificate(certName);
+            String location = "Certificates/"+certName+".cer";
 
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            InputStream certstream = fullStream ("Certificates/"+certName+".cer");
-            Certificate certs =  cf.generateCertificate(certstream);
+            Certificate certs = this.buildCertificate(location);
 
             System.out.println("Keystore: " + certImported.hashCode());
             System.out.println("NON - Keystore: " + certs.hashCode());
@@ -83,14 +104,15 @@ public class KeyStore {
         return false;
     }
 
+    /**
+     * Function creates a keystore file
+     */
     public void generateKeyStore() {
         try {
-            java.security.KeyStore ks = java.security.KeyStore.getInstance(java.security.KeyStore.getDefaultType());
-            String password = "temp1234";
-            ks.load(null,password.toCharArray());
+            keyStore.load(null,password);
 
-            FileOutputStream outputStream = new FileOutputStream("PKIStore");
-            ks.store(outputStream,password.toCharArray());
+            FileOutputStream outputStream = new FileOutputStream(store);
+            keyStore.store(outputStream,password);
             outputStream.close();
 
         } catch (KeyStoreException e) {
@@ -104,31 +126,20 @@ public class KeyStore {
         }
     }
 
-    public KeyStore() {}
-
+    /**
+     * Function imports a certificate/private key into the keystore
+     * @param privateKey Private key of Certificate
+     * @param cert Certificate
+     * @param location Certificate location
+     * @param alias What the certificate is refered to as
+     */
     public void KeyStoreImport(PrivateKey privateKey, X509Certificate[] cert,String location,String alias) {
 
         try {
-            FileInputStream is = new FileInputStream("PKIStore");
-            java.security.KeyStore keyStore = java.security.KeyStore.getInstance(
-                    java.security.KeyStore.getDefaultType()
-            );
+            is = new FileInputStream(store);
+            keyStore.load(is,password);
 
-            keyStore.load(is,"temp1234".toCharArray());
-
-            System.out.println(alias);
-
-            char[] password = "temp1234".toCharArray();
-
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            InputStream certstream = fullStream (location);
-            Certificate certs =  cf.generateCertificate(certstream);
-
-            File keystoreFile = new File("PKIStore");
-            // Load the keystore contents
-            FileInputStream in = new FileInputStream(keystoreFile);
-            keyStore.load(in, password);
-            in.close();
+            Certificate certs = this.buildCertificate(location);
 
             // Add the certificate
             keyStore.setCertificateEntry(alias, certs);
@@ -136,31 +147,39 @@ public class KeyStore {
                 keyStore.setKeyEntry("PrivateKey",privateKey,password,cert);
             }
 
-            final StringWriter s = new StringWriter();
+            StringWriter s = new StringWriter();
             try (JcaPEMWriter w = new JcaPEMWriter(s)) {
                 w.writeObject(privateKey);
             }
 
             // Save the new keystore contents
-            FileOutputStream out = new FileOutputStream(keystoreFile);
+            FileOutputStream out = new FileOutputStream(store);
             keyStore.store(out, password);
             out.close();
 
-        } catch (IOException e) {
-
         } catch (Exception e) {
-            System.out.println("this" + e);
+            System.out.println("Error with importing to keystore\n" + e);
         }
 
     }
 
-    private InputStream fullStream ( String fname ) throws IOException {
-        FileInputStream fis = new FileInputStream(fname);
-        DataInputStream dis = new DataInputStream(fis);
-        byte[] bytes = new byte[dis.available()];
-        dis.readFully(bytes);
-        ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-        return bais;
+    /**
+     * Function builds a certificate from an existing file
+     * @param location Location of certificate file
+     * @return Certificate
+     */
+    private Certificate buildCertificate(String location) {
+        try {
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            File file = new File(location);
+            InputStream certstr = new FileInputStream(file);
+            Certificate cert =  cf.generateCertificate(certstr);
+            return cert;
+        } catch (Exception e ) {
+
+        }
+        return null;
     }
+
 
 }
