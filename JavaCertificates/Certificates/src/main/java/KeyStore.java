@@ -22,7 +22,7 @@ public class KeyStore {
 
             keyStore.load(is,"temp1234".toCharArray());
             if (keyStore.containsAlias("ROOT")) {
-               return true;
+                return true;
             } else {
                 return false;
             }
@@ -52,6 +52,35 @@ public class KeyStore {
             System.out.println(e);
         }
         return null;
+    }
+
+    public boolean verifyCertificate(String certName) {
+        try {
+            FileInputStream is = new FileInputStream("PKIStore");
+            java.security.KeyStore keyStore = java.security.KeyStore.getInstance(
+                    java.security.KeyStore.getDefaultType()
+            );
+
+            keyStore.load(is,"temp1234".toCharArray());
+            Certificate certImported = keyStore.getCertificate(certName);
+
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            InputStream certstream = fullStream ("Certificates/"+certName+".cer");
+            Certificate certs =  cf.generateCertificate(certstream);
+
+            System.out.println("Keystore: " + certImported.hashCode());
+            System.out.println("NON - Keystore: " + certs.hashCode());
+
+            if (certImported.hashCode() == certs.hashCode()) {
+                return true;
+            }
+
+            return false;
+
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return false;
     }
 
     public void generateKeyStore() {
