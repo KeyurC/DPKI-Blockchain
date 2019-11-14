@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path12 = require('path');
-const chaincodeName = 'certchain';
-const chaincodeVersion = '1.2';
-const chaincodePath = "chaincode/certchain/javascript/lib"
+const chaincodeName = 'abstore';
+const chaincodeVersion = '2.1';
+const chaincodePath = "chaincode/certchain/javascript/"
 // const chaincodePath = path12.resolve(__dirname, 'chaincode', 'certchain','javascript','lib');
 const envelope = fs.readFileSync(path12.resolve(__dirname, 'basic-network', 'config','channel.tx'));
 const ccpPath = path12.resolve(__dirname, 'basic-network', 'connection.json');
@@ -29,7 +29,6 @@ async function instantiate() {
 
 
   const client = gateway.getClient();
-  const channel = client.getChannel("mychannel");
 
   client.setAdminSigningIdentity(adminkey,admincert,'Org1MSP')
 
@@ -37,17 +36,39 @@ async function instantiate() {
         pem: peercert.toString(),
         'ssl-target-name-override': 'peer0.org1.example.com'
       });
-  let tx_id = client.newTransactionID(true);
+  let tx_id = await client.newTransactionID(true);
+  const channelName = await client.queryChannels(defaultPeer)
+  const channel = await client.getChannel('mychannel');
+  // console.log(channel);
+  const endorsepol = {
+    identities: [
+      { role: { name: "member", mspId: "org1" }}
+    ],
+    policy: {
+      "1-of": [{ "signed-by": 0 }]
+    }
+  };  
   const instantiateRequest = {
     targets: [defaultPeer],
     chaincodeId: chaincodeName,
-    chaincodeVersion: '1.2',
-    txId: tx_id
+    chaincodeVersion: '2.1',
+    args: ['a','1','b','2'],
+    "endorsement-policy": endorsepol,
+    txId: tx_id,
+    orderer: 'orderer.example.com'
 };
-
+// console.log(await channel.getEndorsementPlan);
 let instantiateResults = await channel.sendInstantiateProposal(instantiateRequest);
-console.log(instantiateResults);
-// instantiateTransaction = channel.sendTransaction(instantiateRequest).then(console.log(instantiateTransaction));
+console.log(instantiateResults[0][0]);
+  const transactionrequest = {
+    proposalResponses: instantiateResults[0],
+    proposal: instantiateResults[1],
+    txID: client.newTransactionID(true)
+  }
+
+  //console.log("Valid Result?",channel.verifyProposalResponse(instantiateResults))
+instantiateTransaction = await channel.sendTransaction(transactionrequest);
+console.log(instantiateTransaction)
 
 }
 
@@ -77,6 +98,7 @@ async function install() {
         //metadataPath: metadata_path,
         chaincodeId: chaincodeName,
         chaincodeType: 'node',
+        fcn: 'initLedger',
         chaincodeVersion: chaincodeVersion
       };
     // console.log(typeof request.chaincodePath)
@@ -90,4 +112,4 @@ async function install() {
     
     
   }
-instantiate();
+  instantiate();
