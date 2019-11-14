@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path12 = require('path');
 const chaincodeName = 'certchain';
-const chaincodeVersion = '1.3';
+const chaincodeVersion = '1.2';
 const chaincodePath = "chaincode/certchain/javascript/lib"
 // const chaincodePath = path12.resolve(__dirname, 'chaincode', 'certchain','javascript','lib');
 const envelope = fs.readFileSync(path12.resolve(__dirname, 'basic-network', 'config','channel.tx'));
@@ -22,27 +22,33 @@ module.exports = {
 const peercert = fs.readFileSync(path12.resolve(__dirname,'basic-network','crypto-config','peerOrganizations','org1.example.com','peers','peer0.org1.example.com','tls','ca.crt'))
 
 async function instantiate() {
-//   const instantiateRequest = {
-//     targets: [defaultPeer],
-//     chaincodeId: chaincodeName,
-//     chaincodeVersion: chaincodeVersion,
-//     fcn: 'init',
-//     args: '',
-//     txId: tx_id
-// };
+  const walletPath = path12.join(process.cwd(), 'wallet');
+  const wallet = new FileSystemWallet(walletPath);
+  const gateway = new Gateway();
+  await gateway.connect(ccpPath, { wallet, identity: 'admin', discovery: { enabled: true, asLocalhost: true } });
 
-// let instantiateResults = await channel.sendInstantiateProposal(instantiateRequest);
-// console.log(instantiateResults);
+
+  const client = gateway.getClient();
+  const channel = client.getChannel("mychannel");
+
+  client.setAdminSigningIdentity(adminkey,admincert,'Org1MSP')
+
+  const defaultPeer = client.newPeer('grpc://localhost:7051', {
+        pem: peercert.toString(),
+        'ssl-target-name-override': 'peer0.org1.example.com'
+      });
+  let tx_id = client.newTransactionID(true);
+  const instantiateRequest = {
+    targets: [defaultPeer],
+    chaincodeId: chaincodeName,
+    chaincodeVersion: '1.2',
+    txId: tx_id
+};
+
+let instantiateResults = await channel.sendInstantiateProposal(instantiateRequest);
+console.log(instantiateResults);
 // instantiateTransaction = channel.sendTransaction(instantiateRequest).then(console.log(instantiateTransaction));
 
-// let chaincodes = await channel.queryInstantiatedChaincodes();
-// if (!Array.isArray(chaincodes)) {
-//     console.log("false");
-// } else {
-//     console.log("true" + chaincodes.values);
-// }
-
-// console.log(results);
 }
 
 async function install() {
@@ -75,8 +81,7 @@ async function install() {
       };
     // console.log(typeof request.chaincodePath)
     let results;
-    // Make install proposal to all peers
-    let tx_id = client.newTransactionID(true);
+    
     // console.log(tx_id)
     results = await client.installChaincode(request);
     console.log(results);
@@ -85,3 +90,4 @@ async function install() {
     
     
   }
+instantiate();
