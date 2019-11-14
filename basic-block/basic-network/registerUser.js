@@ -9,6 +9,12 @@ const path = require('path');
 
 const ccpPath = path.resolve(__dirname, 'basic-network', 'connection.json');
 
+module.exports = {
+    register: function() {
+        main();
+    }
+}
+
 async function main() {
     try {
 
@@ -53,4 +59,4 @@ async function main() {
     }
 }
 
-main();
+// main();

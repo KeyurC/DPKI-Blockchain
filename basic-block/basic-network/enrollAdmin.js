@@ -14,6 +14,12 @@ const certPath = path.resolve(__dirname,'basic-network','crypto-config','orderer
 const ccpJSON = fs.readFileSync(ccpPath, 'utf8');
 const ccp = JSON.parse(ccpJSON);
 
+module.exports = {
+    enrollAdmin: function() {
+        main();
+    }
+}
+
 async function main() {
     try {
 
