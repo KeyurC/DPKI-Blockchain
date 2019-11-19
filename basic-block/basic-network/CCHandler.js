@@ -3,15 +3,31 @@ const {config} = require('./config.js');
 
 // console.log(config.Org1);
 //Fills in values of IBMUtils constructor, which uses these for all following methods
-const orgC = new utils.orgClient(config.channelName,config.orderer0,config.Org1.peer,config.Org1.ca,config.Org1.admin);
 
-async function install() {
+orgC = new utils.orgClient(config.channelName,config.orderer0,config.Org1.peer,config.Org1.ca,config.Org1.admin);
+
+async function setUP() {
     await orgC.login();
     await orgC.getOrgAdmin();
-    console.log("test");
+    await install();
+    await instantiate();
+    
+}
+
+async function install() {
+    
+    console.log("Installing");
     console.log(await orgC.install(config.chaincodeId,config.chaincodeVersion,config.chaincodePath,'node'));
-    console.log("test");
     // orgC.checkInstalled()
 }
 
-install();
+async function instantiate() {
+    if (!await orgC.checkInstantiated(config.chaincodeId,
+        config.chaincodeVersion,
+        config.chaincodePath)) {
+            console.log("Instantiating");
+            await orgC.instantiate(config.chaincodeId,config.chaincodeVersion,'a',3,'b',6);
+        }
+    
+}
+setUP();
