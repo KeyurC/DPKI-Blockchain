@@ -17,8 +17,19 @@ async function setUP() {
     }
     await install();
     await instantiate();
+    await invoke();
+    await query();
     
 }
+
+async function invoke() {
+    await orgC.invoke(config.chaincodeId,config.chaincodeVersion,'invoke','a','b',1);
+}
+
+async function query() {
+    console.log(await orgC.query(config.chaincodeId,config.chaincodeVersion,'query','a'));
+}
+
 
 /**
  * Creates the channels and adds peers to it
