@@ -1,32 +1,22 @@
 // from https://github.com/IBM/build-blockchain-insurance-app/blob/master/web/www/blockchain/utils.js
 // Code is licenced by IBM and is copy righted by IBM
+// Changes from orignal code
+// - Replaced imports with require as they did not seem to work.
+// - Got rid of goPATH and unnecessary imports.
 
 'use strict';
 
-import {
-  resolve
-} from 'path';
-import EventEmitter from 'events';
+const resolve = require('path');
+const EventEmitter = require('events');
+const config = require('./config');
+const long = require('long');
+const hfc = require('fabric-client');
+const User = require('fabric-client/lib/User');
+const CAClient = require('fabric-ca-client');
+const {snakeToCamelCase,camelToSnakeCase} = require('json-style-converter');
 
-import config from './config';
 
-import {
-  load as loadProto
-} from 'grpc';
-import Long from 'long';
-import hfc from 'fabric-client';
-import utils from 'fabric-client/lib/utils';
-import Orderer from 'fabric-client/lib/Orderer';
-import Peer from 'fabric-client/lib/Peer';
-import ChannelEventHub from 'fabric-client/lib/ChannelEventHub';
-import User from 'fabric-client/lib/User';
-import CAClient from 'fabric-ca-client';
-import {
-  snakeToCamelCase,
-  camelToSnakeCase
-} from 'json-style-converter';
-
-process.env.GOPATH = resolve(__dirname, '../../chaincode');
+//process.env.GOPATH = resolve(__dirname, '../../chaincode');
 const JOIN_TIMEOUT = 120000,
   TRANSACTION_TIMEOUT = 120000;
 
