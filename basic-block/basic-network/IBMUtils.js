@@ -3,7 +3,8 @@
 // Changes from orignal code
 // - Replaced imports with require as they did not seem to work.
 // - Got rid of goPATH and unnecessary imports.
-
+// - Add checkInstalled method for installed queries
+// - commented out instantiate eventhub as it left a handing await
 'use strict';
 
 const resolve = require('path');
@@ -195,6 +196,7 @@ class OrganizationClient extends EventEmitter {
     if (!Array.isArray(chaincodes)) {
       return false;
     }
+    console.log(chaincodes);
     return chaincodes.some(cc =>
       cc.name === chaincodeId &&
       cc.path === chaincodePath &&
@@ -229,7 +231,11 @@ class OrganizationClient extends EventEmitter {
 
   async instantiate(chaincodeId, chaincodeVersion, ...args) {
     let proposalResponses, proposal;
+
+    console.log("testad");
     const txId = this._client.newTransactionID();
+    
+    console.log("testad");
     try {
       const request = {
         chaincodeType: 'golang',
@@ -259,32 +265,32 @@ class OrganizationClient extends EventEmitter {
         proposalResponses,
         proposal
       };
-      const deployId = txId.getTransactionID();
-      const transactionCompletePromises = this._eventHubs.map(eh => {
-        eh.connect();
+      // const deployId = txId.getTransactionID();
+      // const transactionCompletePromises = this._eventHubs.map(eh => {
+      //   eh.connect();
 
-        return new Promise((resolve, reject) => {
-          // Set timeout for the transaction response from the current peer
-          const responseTimeout = setTimeout(() => {
-            eh.unregisterTxEvent(deployId);
-            reject(new Error('Peer did not respond in a timely fashion!'));
-          }, TRANSACTION_TIMEOUT);
+      //   return new Promise((resolve, reject) => {
+      //     // Set timeout for the transaction response from the current peer
+      //     const responseTimeout = setTimeout(() => {
+      //       eh.unregisterTxEvent(deployId);
+      //       reject(new Error('Peer did not respond in a timely fashion!'));
+      //     }, TRANSACTION_TIMEOUT);
 
-          eh.registerTxEvent(deployId, (tx, code) => {
-            clearTimeout(responseTimeout);
-            eh.unregisterTxEvent(deployId);
-            if (code != 'VALID') {
-              reject(new Error(
-                `Peer has rejected transaction with code: ${code}`));
-            } else {
-              resolve();
-            }
-          });
-        });
-      });
+      //     eh.registerTxEvent(deployId, (tx, code) => {
+      //       clearTimeout(responseTimeout);
+      //       eh.unregisterTxEvent(deployId);
+      //       if (code != 'VALID') {
+      //         reject(new Error(
+      //           `Peer has rejected transaction with code: ${code}`));
+      //       } else {
+      //         resolve();
+      //       }
+      //     });
+      //   });
+      // });
 
-      transactionCompletePromises.push(this._channel.sendTransaction(request));
-      await transactionCompletePromises;
+      this._channel.sendTransaction(request);
+      // await transactionCompletePromises;
     } catch (e) {
       throw e;
     }
