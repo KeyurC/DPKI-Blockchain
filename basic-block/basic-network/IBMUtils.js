@@ -20,7 +20,7 @@ const {snakeToCamelCase,camelToSnakeCase} = require('json-style-converter');
 const JOIN_TIMEOUT = 120000,
   TRANSACTION_TIMEOUT = 120000;
 
-export class OrganizationClient extends EventEmitter {
+class OrganizationClient extends EventEmitter {
 
   constructor(channelName, ordererConfig, peerConfig, caConfig, admin) {
     super();
@@ -52,11 +52,7 @@ export class OrganizationClient extends EventEmitter {
     this._peers.push(defaultPeer);
     this._channel.addPeer(defaultPeer);
     let defaultEventHub;
-    if (config.isUbuntu){
-      defaultEventHub = this._channel.newChannelEventHub(defaultPeer);
-    } else {
-      defaultEventHub = this._channel.newChannelEventHub(this.defaultPeer);
-    }
+    defaultEventHub = this._channel.newChannelEventHub(defaultPeer);
     this._eventHubs.push(defaultEventHub);
     this._adminUser = null;
   }
@@ -186,7 +182,13 @@ export class OrganizationClient extends EventEmitter {
     }
   }
 
-  async checkInstalled(chaincodeId, chaincodeVersion, chaincodePath) {
+  async checkInstalled() {
+    console.log(await this._client.queryInstalledChaincodes(this._peers,true));
+    
+  }
+
+
+  async checkInstantiated(chaincodeId, chaincodeVersion, chaincodePath) {
     let {
       chaincodes
     } = await this._channel.queryInstantiatedChaincodes();
@@ -199,10 +201,11 @@ export class OrganizationClient extends EventEmitter {
       cc.version === chaincodeVersion);
   }
 
-  async install(chaincodeId, chaincodeVersion, chaincodePath) {
+  async install(chaincodeId, chaincodeVersion, chaincodePath,chaincodeType='node') {
     const request = {
       targets: this._peers,
       chaincodePath,
+      chaincodeType,
       chaincodeId,
       chaincodeVersion
     };
@@ -216,6 +219,8 @@ export class OrganizationClient extends EventEmitter {
         `Error sending install proposal to peer! Error: ${e.message}`);
       throw e;
     }
+    console.log(results);
+    // hfc.client.queryInstalledChaincodes(this._peers,true);
     const proposalResponses = results[0];
     const allGood = proposalResponses
       .every(pr => pr.response && pr.response.status == 200);
@@ -442,14 +447,14 @@ async function getSubmitter(
   }
 }
 
-export function wrapError(message, innerError) {
+function wrapError(message, innerError) {
   let error = new Error(message);
   error.inner = innerError;
   console.log(error.message);
   throw error;
 }
 
-export function marshalArgs(args) {
+function marshalArgs(args) {
   if (!args) {
     return args;
   }
@@ -513,3 +518,10 @@ function unmarshalBlock(block) {
     transactions
   };
 }
+
+
+module.exports = {
+    orgClient: OrganizationClient,
+    wrapper: wrapError,
+    marshalArgs: marshalArgs
+  }
