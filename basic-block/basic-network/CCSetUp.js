@@ -52,7 +52,6 @@ async function channelManager() {
  * Installs the chaincode
  */
 async function install() {
-    
     console.log("Installing");
     console.log(await orgC.install(config.chaincodeId,config.chaincodeVersion,config.chaincodePath,'node'));
     // orgC.checkInstalled()
@@ -66,7 +65,7 @@ async function instantiate() {
         config.chaincodeVersion,
         config.chaincodePath)) {
             console.log("Instantiating");
-            await orgC.instantiate(config.chaincodeId,config.chaincodeVersion,'a',3,'b',6);
+            await orgC.instantiate(config.chaincodeId,config.chaincodeVersion,'223223222','Ken.org');
         }
     
 }
