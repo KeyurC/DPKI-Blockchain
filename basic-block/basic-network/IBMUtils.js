@@ -1,5 +1,10 @@
 // from https://github.com/IBM/build-blockchain-insurance-app/blob/master/web/www/blockchain/utils.js
-// Code is licenced by IBM and is copy righted by IBM
+/*
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+*/
+
 // Changes from orignal code
 // - Replaced imports with require as they did not seem to work.
 // - Got rid of goPATH and unnecessary imports.
