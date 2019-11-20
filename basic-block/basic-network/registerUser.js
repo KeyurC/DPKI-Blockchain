@@ -3,25 +3,21 @@
  */
 
 'use strict';
-
+const {config} = require('./config.js');
 const { FileSystemWallet, Gateway, X509WalletMixin } = require('fabric-network');
 const path = require('path');
 
 const ccpPath = path.resolve(__dirname, 'basic-network', 'connection.json');
 
 module.exports = {
-    register: function() {
-        main();
-    }
+    register: main
 }
 
 async function main() {
     try {
 
         // Create a new file system based wallet for managing identities.
-        const walletPath = path.join(process.cwd(), 'wallet');
-        const wallet = new FileSystemWallet(walletPath);
-        console.log(`Wallet path: ${walletPath}`);
+        const wallet = new FileSystemWallet(config.walletPath);
 
         // Check to see if we've already enrolled the user.
         const userExists = await wallet.exists('user1');
@@ -59,4 +55,4 @@ async function main() {
     }
 }
 
-main();
+// main();
