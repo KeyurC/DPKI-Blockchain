@@ -21,7 +21,7 @@ module.exports = {Query};
 
 const query = new Query();
 async function test() {
-        let value = await query.queryCC('b');
+        let value = await query.queryCC('223223222');
         console.log(value);
 }
 
