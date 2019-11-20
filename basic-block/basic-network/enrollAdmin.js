@@ -3,7 +3,7 @@
  */
 
 'use strict';
-
+const {config} = require('./config.js');
 const FabricCAServices = require('fabric-ca-client');
 const { FileSystemWallet, X509WalletMixin } = require('fabric-network');
 const fs = require('fs');
@@ -15,9 +15,7 @@ const ccpJSON = fs.readFileSync(ccpPath, 'utf8');
 const ccp = JSON.parse(ccpJSON);
 
 module.exports = {
-    enrollAdmin: function() {
-        main();
-    }
+    enrollAdmin: main
 }
 
 async function main() {
@@ -29,9 +27,7 @@ async function main() {
         const ca = new FabricCAServices(caInfo.url, { trustedRoots: caTLSCACerts, verify: false }, caInfo.caName);
 
         // Create a new file system based wallet for managing identities.
-        const walletPath = path.join(process.cwd(), 'wallet');
-        const wallet = new FileSystemWallet(walletPath);
-        console.log(`Wallet path: ${walletPath}`);
+        const wallet = new FileSystemWallet(config.walletPath);
 
         // Check to see if we've already enrolled the admin user.
         const adminExists = await wallet.exists('admin');
@@ -51,5 +47,3 @@ async function main() {
         process.exit(1);
     }
 }
-
-main();
