@@ -15,28 +15,13 @@ var ABstore = class {
     let ret = stub.getFunctionAndParameters();
     console.info(ret);
     let args = ret.params;
-    // initialise only if 4 parameters passed.
-    if (args.length != 4) {
-      return shim.error('Incorrect number of arguments. Expecting 4');
-    }
 
-    let A = args[0];
-    let B = args[2];
-    let Aval = args[1];
-    let Bval = args[3];
-
-    if (typeof parseInt(Aval) !== 'number' || typeof parseInt(Bval) !== 'number') {
-      return shim.error('Expecting integer value for asset holding');
-    }
+    let Hash = args[0];
+    let CN = args[1];
 
     try {
-      await stub.putState(A, Buffer.from(Aval));
-      try {
-        await stub.putState(B, Buffer.from(Bval));
-        return shim.success();
-      } catch (err) {
-        return shim.error(err);
-      }
+      await stub.putState(Hash, Buffer.from(CN));
+      return shim.success();
     } catch (err) {
       return shim.error(err);
     }
@@ -60,10 +45,11 @@ var ABstore = class {
   }
 
   async invoke(stub, args) {
-    let A = args[0];
+    let Hash = args[0];
+    let CN = args[1];
 
     // Write the states back to the ledger
-    await stub.putState(A, Buffer.from(A.toString()));
+    await stub.putState(Hash, Buffer.from(CN.toString()));
 
   }
 
