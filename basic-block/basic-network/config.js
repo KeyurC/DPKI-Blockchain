@@ -13,6 +13,7 @@ const config = {
   chaincodeId: 'abstore',
   chaincodeVersion: 'v3',
   chaincodePath: 'chaincode/certchain/javascript/',
+  walletPath: path.resolve(__dirname,'wallet'),
   orderer0: {
     hostname: 'orderer.example.com',
     url: 'grpc://localhost:7050'
