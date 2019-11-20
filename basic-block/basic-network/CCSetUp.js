@@ -23,9 +23,9 @@ async function setUP() {
     await instantiate();
     if (fs.existsSync(config.walletPath)) {
         fs.removeSync(config.walletPath);
-        await enroll.enrollAdmin();
-        await register.register();
-    }
+    } 
+    await enroll.enrollAdmin();
+    await register.register();
     process.exit(1);
 }
 
