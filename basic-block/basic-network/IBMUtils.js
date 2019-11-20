@@ -142,29 +142,29 @@ class OrganizationClient extends EventEmitter {
       };
       await this._channel.joinChannel(request, JOIN_TIMEOUT);
       // Check if Joined
-      this._eventHubs.map(eh => {
-        eh.connect({full_block: true});
-        return new Promise((resolve, reject) => {
-          let blockRegistration = eh.registerBlockEvent(
-              (block) => {
-                eh.unregisterBlockEvent(blockRegistration);
-                if (block.data.data.length === 1 && block.data.data[0].payload.header.channel_header.channel_id === this._channelName) {
-                  console.log('Peer joined default channel');
-                  resolve();
-                } else {
-                  reject(new Error('Peer did not join an expected channel.'));
-                }
-              },
-              (err) => {
-                console.log(err);
-              }
-          );
-          const responseTimeout = setTimeout(() => {
-            eh.unregisterBlockEvent(blockRegistration);
-            reject(new Error('Peer did not respond in a timely fashion!'));
-          }, JOIN_TIMEOUT);
-        });
-      });
+      // this._eventHubs.map(eh => {
+      //   eh.connect({full_block: true});
+      //   return new Promise((resolve, reject) => {
+      //     let blockRegistration = eh.registerBlockEvent(
+      //         (block) => {
+      //           eh.unregisterBlockEvent(blockRegistration);
+      //           if (block.data.data.length === 1 && block.data.data[0].payload.header.channel_header.channel_id === this._channelName) {
+      //             console.log('Peer joined default channel');
+      //             resolve();
+      //           } else {
+      //             reject(new Error('Peer did not join an expected channel.'));
+      //           }
+      //         },
+      //         (err) => {
+      //           console.log(err);
+      //         }
+      //     );
+      //     const responseTimeout = setTimeout(() => {
+      //       eh.unregisterBlockEvent(blockRegistration);
+      //       reject(new Error('Peer did not respond in a timely fashion!'));
+      //     }, JOIN_TIMEOUT);
+      //   });
+      // });
     } catch (e) {
       console.log(`Error joining peer to channel. Error: ${e.message}`);
       throw e;
@@ -255,6 +255,8 @@ class OrganizationClient extends EventEmitter {
       if (!allGood) {
         throw new Error(
           `Proposal rejected by some (all) of the peers: ${proposalResponses}`);
+      } else {
+        console.log("instantiate successful");
       }
     } catch (e) {
       throw e;
@@ -317,6 +319,8 @@ class OrganizationClient extends EventEmitter {
       if (!allGood) {
         throw new Error(
           `Proposal rejected by some (all) of the peers: ${proposalResponses}`);
+      } else {
+        console.log('successfully submitted');
       }
     } catch (e) {
       throw e;
@@ -328,33 +332,13 @@ class OrganizationClient extends EventEmitter {
         proposal
       };
 
-      const transactionId = txId.getTransactionID();
-      const transactionCompletePromises = this._eventHubs.map(eh => {
-        eh.connect();
+      const result = await this._channel.sendTransaction(request);
+      if (result.status == 'SUCCESS') {
+        console.log("Submitted successfully");
+      } else {
 
-        return new Promise((resolve, reject) => {
-          // Set timeout for the transaction response from the current peer
-          const responseTimeout = setTimeout(() => {
-            eh.unregisterTxEvent(transactionId);
-            reject(new Error('Peer did not respond in a timely fashion!'));
-          }, TRANSACTION_TIMEOUT);
-
-          eh.registerTxEvent(transactionId, (tx, code) => {
-            clearTimeout(responseTimeout);
-            eh.unregisterTxEvent(transactionId);
-            if (code != 'VALID') {
-              reject(new Error(
-                `Peer has rejected transaction with code: ${code}`));
-            } else {
-              resolve();
-            }
-          });
-        });
-      });
-
-      transactionCompletePromises.push(this._channel.sendTransaction(request));
+      }
       try {
-        await transactionCompletePromises;
         const payload = proposalResponses[0].response.payload;
         return unmarshalResult([payload]);
       } catch (e) {
