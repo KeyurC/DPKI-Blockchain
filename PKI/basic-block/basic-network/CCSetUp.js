@@ -26,7 +26,6 @@ async function setUP(hash,CN) {
     } 
     await enroll.enrollAdmin();
     await register.register();
-    process.exit(1);
 }
 
 /**
@@ -71,4 +70,4 @@ async function instantiate(hash,CN) {
 }
 
 module.exports = {setUP};
-// setUP();
+//setUP('22323','TEST');
