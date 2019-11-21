@@ -5,6 +5,7 @@ from Utility.ConfigLoader import ConfigLoader
 from Utility.KeyStoreHandler import KeyStoreHandler
 from Model.RegistrationAuthority import RegistrationAuthority
 import os
+import time
 
 config = ConfigLoader()
 
@@ -29,14 +30,19 @@ class Controller():
         # config.print()
 
     def main(self):
-        self.loadConfig()
-        self.input()
-        if not os.path.exists("PKIStore"):
-            self.createKeystore()
-        self.genDict()
-        self.genCSR()
-        self.createCertReqFile()
-        self.createCertificate()
+        while (True):
+            if not os.path.exists("PKIStore"):
+                print("No keystore, generating a keystore")
+                self.createKeystore()
+                time.sleep(10)
+            else:
+                self.loadConfig()
+                self.input()
+                self.genDict()
+                self.genCSR()
+                self.createCertReqFile()
+                self.createCertificate()
+
 
     def input(self):
         UI = CommandLineUI(self.questions)
