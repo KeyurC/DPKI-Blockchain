@@ -20,7 +20,7 @@ class KeyStoreHandler():
         list.append(root)
         pk = jks.PrivateKeyEntry.new("ROOT PK",[dumped],key,"rsa_raw")
 
-        chaincode.sendNewCertificate(hash(dumped),'ROOT');
+        chaincode.InitCert(hash(dumped),'ROOT');
         list.append(pk)
         keystore = KeyStore.new('jks',list)
         keystore.save("PKIStore","temp1234")
@@ -77,7 +77,7 @@ class KeyStoreHandler():
         list.append(newCert)
         keystore = KeyStore.new('jks', list)
 
-        # chaincode.sendNewCertificate(hash(pemFormat),cert.get_subject().CN);
+        chaincode.invoke(hash(pemFormat),cert.get_subject().CN);
         keystore.save("PKIStore","temp1234")
 
     def exportCert(self):

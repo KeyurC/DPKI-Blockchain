@@ -4,16 +4,18 @@ orgC = new utils.orgClient(config.channelName,config.orderer0,config.Org1.peer,c
 
 
 class Invoke {
-    
-    async invokeCC(from,to,ammount) {
+    constructor() {
+
+    }
+
+    async invokeCC(hash,CN) {
         await orgC.login();
         await orgC.getOrgAdmin();
-        orgC.invoke(config.chaincodeId,config.chaincodeVersion,'invoke',from,to,ammount);
+        console.log("hash:",hash);
+        console.log("CN:",CN);
+        orgC.invoke(config.chaincodeId,config.chaincodeVersion,'invoke',hash,CN);
         
     }
 }
 
-module.exports = {Invoke}
-
-const invoke = new Invoke();
-invoke.invokeCC('a','b',1);
+module.exports = {Invoke};

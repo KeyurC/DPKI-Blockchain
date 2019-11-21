@@ -1,6 +1,6 @@
 'use strict';
 
-const {config} = require('./config.js');
+const { config } = require('./config.js');
 const { FileSystemWallet, Gateway } = require('fabric-network');
 const path = require('path');
 const ccpPath = path.resolve(__dirname, 'basic-network', 'connection.json');
@@ -13,15 +13,16 @@ class Query {
                 const network = await gateway.getNetwork(config.channelName);
                 const contract = network.getContract(config.chaincodeId);
                 const result = await contract.evaluateTransaction('query', key);
+                console.log("test:",result.toString());
                 return result.toString();
         }
 }
 
-module.exports = {Query};
+module.exports = { Query };
 
 const query = new Query();
 async function test() {
-        let value = await query.queryCC('-4318461684284138000');
+        let value = await query.queryCC('7817406289089348000');
         console.log(value);
 }
 
