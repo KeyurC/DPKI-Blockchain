@@ -13,14 +13,14 @@ orgC = new utils.orgClient(config.channelName,config.orderer0,config.Org1.peer,c
 /**
  * SetUP function
  */
-async function setUP() {
+async function setUP(hash,CN) {
     await orgC.login();
     await orgC.getOrgAdmin();
     if(!await orgC.checkChannelMembership()){
         await channelManager();
     }
     await install();
-    await instantiate();
+    await instantiate(hash,CN);
     if (fs.existsSync(config.walletPath)) {
         fs.removeSync(config.walletPath);
     } 
@@ -60,13 +60,15 @@ async function install() {
 /**
  * Instantiates the chaincode
  */
-async function instantiate() {
+async function instantiate(hash,CN) {
     if (!await orgC.checkInstantiated(config.chaincodeId,
         config.chaincodeVersion,
         config.chaincodePath)) {
             console.log("Instantiating");
-            await orgC.instantiate(config.chaincodeId,config.chaincodeVersion,'223223222','Ken.org');
+            await orgC.instantiate(config.chaincodeId,config.chaincodeVersion,hash,CN);
         }
     
 }
-setUP();
+
+module.exports = {setUP};
+// setUP();

@@ -77,7 +77,7 @@ class KeyStoreHandler():
         list.append(newCert)
         keystore = KeyStore.new('jks', list)
 
-        chaincode.sendNewCertificate(hash(pemFormat),cert.get_subject().CN);
+        # chaincode.sendNewCertificate(hash(pemFormat),cert.get_subject().CN);
         keystore.save("PKIStore","temp1234")
 
     def exportCert(self):

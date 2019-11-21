@@ -5,6 +5,6 @@ class CCClient():
 
     def sendNewCertificate(self,hash,CN):
         data = {'Hash': hash, 'CommonName': CN}
-        post = requests.post(self.url+'postdata',
+        post = requests.post(self.url+'postroot',
                      json=data)  # the POST request
         print(post.text)
