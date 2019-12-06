@@ -3,12 +3,21 @@ from Model.CASetUp import CASetUp
 from OpenSSL import crypto
 import jks
 from Utility.FileHandler import FileHandler
-from Utility.CCClient import CCClient;
-chaincode = CCClient();
+from Utility.CCClient import CCClient
+chaincode = CCClient()
+
+"""
+This class handles interacts with the keystore,
+which acts as the centralized database to store certificates
+and keys
+"""
 class KeyStoreHandler():
     def __init__(self):
         pass
 
+    """
+    This function generates a keystore if none exists
+    """
     def createStore(self):
         setUp = CASetUp()
         cert = setUp.selfsign()
@@ -25,10 +34,20 @@ class KeyStoreHandler():
         keystore = KeyStore.new('jks',list)
         keystore.save("PKIStore","temp1234")
 
+    """
+    This function loads the keystore, to be queried from and
+    added to by other functions
+    :return KeyStore keystore
+    """
     def loadStore(self):
         keystore = KeyStore.load("PKIStore", "temp1234")
         return keystore
 
+    """
+    This function loads the CA's private key from the
+    keystore
+    :return PKey pkey
+    """
     def loadPrivateKey(self,alias="root pk"):
         keystore = self.loadStore()
         pkey = crypto.load_privatekey(crypto.FILETYPE_PEM,self.searchPrivateKeys(alias,keystore))
@@ -36,6 +55,11 @@ class KeyStoreHandler():
         f.genPrivateFile("rootpk",pkey)
         return pkey
 
+    """
+    This function loads the CA's certificate
+    from the keystore
+    :return certificate cert
+    """
     def loadCertificate(self,alias="root"):
         keystore = self.loadStore()
         cert = crypto.load_certificate(crypto.FILETYPE_PEM,self.searchCertificate(alias,keystore))
@@ -43,11 +67,18 @@ class KeyStoreHandler():
         f.genCertFile("root",cert,".crt")
         return cert
 
+    """
+    This function queries the keystore for a specific certificate
+    :return certificate cert
+    """
     def searchCertificate(self,name,keystore):
         for alias, c in keystore.certs.items():
             if c.alias == name:
                 return c.cert
 
+    """
+    This function returns the entire content of the keystore
+    """
     def getAllKeystoreContent(self,keystore):
         content = []
         root = ""
@@ -63,11 +94,18 @@ class KeyStoreHandler():
 
         return content
 
+    """
+    This function queries the keystore for a private key
+    :return PKey pkey
+    """
     def searchPrivateKeys(self,name,keystore):
         for alias, pk in keystore.private_keys.items():
             if pk.alias == name:
                 return pk.pkey
 
+    """
+    This function adds a new certificate to the keystore
+    """
     def importCert(self,cert):
         keystore = self.loadStore()
         list = self.getAllKeystoreContent(keystore)
