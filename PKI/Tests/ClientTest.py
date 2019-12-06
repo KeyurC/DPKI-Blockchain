@@ -3,6 +3,10 @@ from Model.Client import Client
 
 class ClientTest(unittest.TestCase):
 
+    """
+    This test determines if a CSR is generated
+    successfully
+    """
     def test_generateCSR(self):
         DN = []
         Dict = {"CN": "test"}
