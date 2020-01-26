@@ -36,8 +36,8 @@ describe('CertificateUndefinedTest', function () {
 })
 
 //Test checks if data has been retained and can be retrieved
-describe('CertificateConfidentialityTest', function () {
-    it('Keys returned should be valid and correct format', function () {
+describe('CertificateIntegrityTest', function () {
+    it('Certificate returned has wrong attributes', function () {
         const caValue = ['CA','CertificateAuthority','UK']
         const ca = new CA();
         ca.generateKeyPair();
@@ -52,5 +52,4 @@ describe('CertificateConfidentialityTest', function () {
         expect(valid).to.true;
     })
 })
-
 
