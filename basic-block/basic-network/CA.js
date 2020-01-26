@@ -52,6 +52,47 @@ class CA {
           return this.CA;
     }
 
+    generateSubCA(number) {
+      let subCaList = [];
+
+      for (let i = 0; i < number; i++) {
+        let commonName = "SubCA" + i.toString();
+        let keys = forge.pki.rsa.generateKeyPair(1024);
+
+        //Root CertificateAuthority certificate and private key
+        let CA = forge.pki.certificateFromPem(this.CA.certificate);
+        let PK = forge.pki.privateKeyFromPem(this.CA.privateKey);
+
+        //Create new certificate
+        let cert = forge.pki.createCertificate();
+        cert.publicKey = keys.publicKey;
+        cert.validity.notBefore = new Date();
+        cert.validity.notAfter = new Date();
+        cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1);
+        cert.setSubject([{
+            name: 'commonName',
+            value: commonName
+          }, {
+            name: 'organizationName',
+            value: "SubCertificateAuthority"
+          }, {
+            shortName: 'C',
+            value: 'UK'
+          }]);
+          //Set issuer as root certificate and sign using root pk
+          cert.setIssuer(CA.issuer.attributes);
+          cert.sign(PK);
+          
+          let pem = {
+            certificate: forge.pki.certificateToPem(cert),
+            privateKey: forge.pki.privateKeyToPem(keys.privateKey)
+          }
+          subCaList.push(pem);
+
+      }
+      return subCaList;
+    }
+
 
 }
 
