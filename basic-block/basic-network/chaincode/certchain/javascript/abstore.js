@@ -6,21 +6,19 @@
 
 const shim = require('fabric-shim');
 const util = require('util');
+const forge = require('node-forge');
 
 var ABstore = class {
 
   // Initialize the chaincode
   async Init(stub) {
-    console.info('========= ABstore Init =========');
     let ret = stub.getFunctionAndParameters();
-    console.info(ret);
     let args = ret.params;
-
-    let Hash = args[0];
+    let pem = args[0];
     let CN = args[1];
-
+    console.log("HI TESTING THIS")
     try {
-      await stub.putState(Hash, Buffer.from(CN));
+      await stub.putState('ROOTCA', Buffer.from(pem));
       return shim.success();
     } catch (err) {
       return shim.error(err);
@@ -45,12 +43,27 @@ var ABstore = class {
   }
 
   async invoke(stub, args) {
-    let Hash = args[0];
-    let CN = args[1];
+    let CN = args[0];
+    let certreq;
+    try {
+      certreq = forge.pki.certificationRequestFromPem(args[1])
+    } catch (error) {
+      console.error("failed for cert request" + error)
+    }
 
-    // Write the states back to the ledger
-    await stub.putState(Hash, Buffer.from(CN.toString()));
+    let pem = JSON.parse(args[2]);
+    let privateKey = forge.pki.privateKeyFromPem(pem.private_key);
+    let rootCA = forge.pki.certificateFromPem(pem.certificate);
 
+    let cert = forge.pki.createCertificate();
+    cert.publicKey = certreq.publicKey;
+    cert.validity.notBefore = new Date();
+    cert.validity.notAfter = new Date();
+    cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1);
+    cert.setSubject(certreq.subject.attributes);
+    cert.setIssuer(rootCA.issuer.attributes);
+    cert.sign(privateKey);
+    await stub.putState(CN, Buffer.from(forge.pki.certificateToPem(cert)));
   }
 
   // Deletes an entity from state
