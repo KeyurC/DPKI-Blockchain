@@ -11,7 +11,7 @@ const config = {
   channelName: 'mychannel',
   channelConfig: readFileSync(path.resolve(__dirname, 'basic-network/config/channel.tx')),
   chaincodeId: 'abstore',
-  chaincodeVersion: 'v6',
+  chaincodeVersion: 'v45',
   chaincodePath: 'chaincode/certchain/javascript/',
   walletPath: path.resolve(__dirname,'wallet'),
   orderer0: {
