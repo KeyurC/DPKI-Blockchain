@@ -341,7 +341,7 @@ class OrganizationClient extends EventEmitter {
       if (result.status == 'SUCCESS') {
         console.log("Submitted successfully");
       } else {
-
+        console.log("Failed to submit")
       }
       try {
         const payload = proposalResponses[0].response.payload;
