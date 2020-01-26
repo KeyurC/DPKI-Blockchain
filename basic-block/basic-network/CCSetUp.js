@@ -1,7 +1,8 @@
 const utils = require('./IBMUtils.js');
 const {config} = require('./config.js');
 const enroll = require('./enrollAdmin.js');
-const register = require('./registerUser.js')
+const register = require('./registerUser.js');
+const CA = require('./CA.js');
 const fs = require('fs-extra');
 const path = require('path');
 
@@ -65,7 +66,10 @@ async function instantiate() {
         config.chaincodeVersion,
         config.chaincodePath)) {
             console.log("Instantiating");
-            await orgC.instantiate(config.chaincodeId,config.chaincodeVersion,'223223222','Ken.org');
+            const ca = new CA();
+            ca.generateKeyPair();
+            var pem = ca.selfsign();
+            await orgC.instantiate(config.chaincodeId,config.chaincodeVersion,pem,'ROOTCA');
         }
     
 }
