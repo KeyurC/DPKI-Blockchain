@@ -19,10 +19,10 @@ class Query {
 
 module.exports = {Query};
 
-const query = new Query();
-async function test() {
-        let value = await query.queryCC('223223222');
-        console.log(value);
-}
+// const query = new Query();
+// async function test() {
+//         let value = await query.queryCC('example.org');
+//         console.log(value)
+// }
 
-test();
+// test();
