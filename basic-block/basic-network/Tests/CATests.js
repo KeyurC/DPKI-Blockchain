@@ -1,6 +1,5 @@
 const chai = require('chai');
 var expect = chai.expect;
-chai.expect.tr
 const CA = require('./../CA.js');
 const forge = require('node-forge');
 
@@ -53,3 +52,59 @@ describe('CertificateIntegrityTest', function () {
     })
 })
 
+//Test checks if number of sub CA's returned is equal to requested amount
+describe('SubCALengthTest', function () {
+    it('Certificate returned has wrong attributes', function () {
+        let CANumber = 3;
+        const ca = new CA();
+        ca.generateKeyPair();
+        ca.selfsign();
+        let subCaList = ca.generateSubCA(CANumber);
+        expect(subCaList.length).to.equal(CANumber);
+    })
+})
+
+//Test checks if the sub ca's have been issued by the root ca using certificate path
+//verification. 
+describe('CertificateChainVerificationTest', function () {
+    it('Certificate returned has not been issued by the root CA', function () {
+        let CANumber = 3;
+        const ca = new CA();
+        ca.generateKeyPair();
+        let caCert = forge.pki.certificateFromPem(ca.selfsign().certificate);
+        let subCaList = ca.generateSubCA(CANumber);
+        let caStore = forge.pki.createCaStore([caCert]);
+        let verified = false;
+        for (let i = 0; i < subCaList.length; i++) {
+            let subCert = forge.pki.certificateFromPem(subCaList[i].certificate);
+            verified = forge.pki.verifyCertificateChain(caStore,[subCert]);
+            if (verified !== true) {
+                break;
+            }
+        }
+        expect(verified).to.true;
+    })
+})
+
+//Test checks if the attributes set in the sub ca certificates are correct
+describe('SubCertificateIntegrityTest', function () {
+    it('Certificate returned has wrong attributes', function () {
+        let CANumber = 3
+        const caValue = ['SubCA','SubCertificateAuthority','UK']
+        const ca = new CA();
+        ca.generateKeyPair();
+        ca.selfsign();
+        let subCaList = ca.generateSubCA(CANumber);
+        let valid = true;
+        for (let i = 0; i < CANumber; i++) {
+            caValue[0] = 'SubCA' + i.toString();
+            let subcert = forge.pki.certificateFromPem(subCaList[i].certificate);
+            for (let x = 0; x < caValue.length; x++)
+            if (caValue[i] != subcert.subject.attributes[i].value) {
+                valid = false;
+                break;
+            }
+        }
+        expect(valid).to.true;
+    })
+})
