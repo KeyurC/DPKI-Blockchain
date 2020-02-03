@@ -2,7 +2,7 @@
 
 const forge = require('node-forge');
 const CA = require('./CA.js');
-const invoke = require('./invoke.js')
+const clientHandler = require('./ClientRequestHandler.js')
 
 class Client {
   constructor(keys = "", CN = "example1.org", country = "UK", state = "Middlesex",
@@ -14,6 +14,13 @@ class Client {
     this.locality = locality;
     this.org = org;
     this.ou = ou;
+    this.main();
+  }
+
+  main() {
+    this.generateKeyPair();
+    let request = this.generateCSR();
+    new clientHandler.ClientRequestHandler(request.certreq, request.cn);
   }
 
   generateKeyPair() {
@@ -44,9 +51,9 @@ class Client {
     }]);
 
     certificateReq.sign(this.keys.privateKey)
-    
+
     var CSR = {
-      certreq : forge.pki.certificationRequestToPem(certificateReq),
+      certreq: forge.pki.certificationRequestToPem(certificateReq),
       cn: certificateReq.subject.attributes[0].value
     };
     return CSR;
@@ -54,9 +61,5 @@ class Client {
 
 }
 
-module.exports = Client;
+module.exports = {Client};
 const client = new Client();
-client.generateKeyPair();
-var req = client.generateCSR();
-var Inv = new invoke.Invoke()
-Inv.invokeCC(req.cn,req.certreq);
