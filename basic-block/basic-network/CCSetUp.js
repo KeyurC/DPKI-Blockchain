@@ -68,8 +68,11 @@ async function instantiate() {
             console.log("Instantiating");
             const ca = new CA();
             ca.generateKeyPair();
-            var pem = ca.selfsign();
-            await orgC.instantiate(config.chaincodeId,config.chaincodeVersion,pem,'ROOTCA');
+            let pem = ca.selfsign();
+            let CaList = ca.generateSubCA(3);
+            CaList.push(pem);
+            
+            await orgC.instantiate(config.chaincodeId,config.chaincodeVersion,CaList,'ROOTCA');
         }
     
 }
