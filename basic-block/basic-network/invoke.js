@@ -16,13 +16,10 @@ class Invoke {
 
     async selectCA() {
         const query1 = new query.Query();
-        var value = await query1.queryCC('ROOTCA');
+        var value = await query1.queryCC('SubCA1');
         var pem = JSON.parse(value);
         return pem;
     }
 }
 
 module.exports = {Invoke}
-
-// const invoke = new Invoke();
-// invoke.invokeCC('a','b',1);
