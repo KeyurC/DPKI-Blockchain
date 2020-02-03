@@ -7,6 +7,16 @@
 const shim = require('fabric-shim');
 const util = require('util');
 const forge = require('node-forge');
+const assert = require('assert');
+const crypto = require('crypto');
+
+const algo = 'aes-128-cbc';
+const inEncoding = "utf-8";
+const outEncoding = "hex";
+
+const sharedSecret = crypto.randomBytes(16);
+const IV = crypto.randomBytes(16);
+
 
 var ABstore = class {
 
@@ -14,15 +24,49 @@ var ABstore = class {
   async Init(stub) {
     let ret = stub.getFunctionAndParameters();
     let args = ret.params;
-    let pem = args[0];
+    let CAList = args[0];
     let CN = args[1];
-    console.log("HI TESTING THIS")
+
+    let tmpList = this.parse(CAList);
+
+    // let cert = pem.certificate;
+    // let pk = pem.privateKey;
+    // let ciper = crypto.createCipheriv(algo,sharedSecret,IV);
+
     try {
-      await stub.putState('ROOTCA', Buffer.from(pem));
+      for (let i = 0; i < tmpList.length-1; i++) {
+        let cn = "SubCA" + i;
+        await stub.putState(cn, Buffer.from(tmpList[i]));
+      }
+      await stub.putState(CN, Buffer.from(tmpList[tmpList.length-1]));
       return shim.success();
     } catch (err) {
       return shim.error(err);
     }
+
+  }
+  /**
+   * 
+   * @param {Certificate and Private Key list to parse and separate} value 
+   */
+  parse(value) {
+    let CAList = [];
+    for (let i = 1; CAList.length < 4; i++) {
+      if (value[i] == '{') {
+        let starttmp = i;
+        let found = false;
+        let end = 0;
+        for (let x = i + 1; found == false; x++) {
+          if (value[x] == '}') {
+            end = x + 1;
+            found = true;
+          }
+        }
+        let tmp = value.substring(starttmp, end);
+        CAList.push(tmp);
+      }
+    }
+    return CAList;
   }
 
   async Invoke(stub) {
@@ -41,6 +85,8 @@ var ABstore = class {
       return shim.error(err);
     }
   }
+
+
 
   async invoke(stub, args) {
     let CN = args[0];
@@ -61,7 +107,7 @@ var ABstore = class {
     cert.validity.notAfter = new Date();
     cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1);
     cert.setSubject(certreq.subject.attributes);
-    cert.setIssuer(rootCA.issuer.attributes);
+    cert.setIssuer(rootCA.subject.attributes);
     cert.sign(privateKey);
     await stub.putState(CN, Buffer.from(forge.pki.certificateToPem(cert)));
   }
