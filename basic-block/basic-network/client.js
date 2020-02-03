@@ -5,7 +5,7 @@ const CA = require('./CA.js');
 const invoke = require('./invoke.js')
 
 class Client {
-  constructor(keys = "", CN = "example.org", country = "UK", state = "Middlesex",
+  constructor(keys = "", CN = "example1.org", country = "UK", state = "Middlesex",
     locality = "isleworth", org = "DPKI", ou = "Test") {
     this.keys = keys;
     this.cn = CN;
@@ -55,3 +55,8 @@ class Client {
 }
 
 module.exports = Client;
+const client = new Client();
+client.generateKeyPair();
+var req = client.generateCSR();
+var Inv = new invoke.Invoke()
+Inv.invokeCC(req.cn,req.certreq);
