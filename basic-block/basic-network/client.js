@@ -1,7 +1,6 @@
 "use strict";
 
 const forge = require('node-forge');
-const CA = require('./CA.js');
 const clientHandler = require('./ClientRequestHandler.js')
 
 class Client {
@@ -14,7 +13,6 @@ class Client {
     this.locality = locality;
     this.org = org;
     this.ou = ou;
-    this.main();
   }
 
   main() {
@@ -61,5 +59,4 @@ class Client {
 
 }
 
-module.exports = {Client};
-const client = new Client();
+module.exports = Client;
