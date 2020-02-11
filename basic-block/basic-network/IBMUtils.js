@@ -19,7 +19,8 @@ const long = require('long');
 const hfc = require('fabric-client');
 const User = require('fabric-client/lib/User');
 const CAClient = require('fabric-ca-client');
-const {snakeToCamelCase,camelToSnakeCase} = require('json-style-converter');
+const chalk = require('chalk');
+const { snakeToCamelCase, camelToSnakeCase } = require('json-style-converter');
 
 
 //process.env.GOPATH = resolve(__dirname, '../../chaincode');
@@ -80,14 +81,14 @@ class OrganizationClient extends EventEmitter {
   connectAndRegisterBlockEvent() {
     // Setup event hubs 
     try {
-      this._eventHubs[0].connect({full_block: true});
+      this._eventHubs[0].connect({ full_block: true });
       this._eventHubs[0].registerBlockEvent(
-          (block) => {
-             this.emit('block', unmarshalBlock(block));
-          },
-          (err) => {
-             console.log(err);
-          }
+        (block) => {
+          this.emit('block', unmarshalBlock(block));
+        },
+        (err) => {
+          console.log(err);
+        }
       );
     } catch (e) {
       console.log(`Failed to connect and register block event. Error ${e.message}`);
@@ -146,33 +147,44 @@ class OrganizationClient extends EventEmitter {
         block: genesisBlock
       };
       await this._channel.joinChannel(request, JOIN_TIMEOUT);
-      // Check if Joined
-      // this._eventHubs.map(eh => {
-      //   eh.connect({full_block: true});
-      //   return new Promise((resolve, reject) => {
-      //     let blockRegistration = eh.registerBlockEvent(
-      //         (block) => {
-      //           eh.unregisterBlockEvent(blockRegistration);
-      //           if (block.data.data.length === 1 && block.data.data[0].payload.header.channel_header.channel_id === this._channelName) {
-      //             console.log('Peer joined default channel');
-      //             resolve();
-      //           } else {
-      //             reject(new Error('Peer did not join an expected channel.'));
-      //           }
-      //         },
-      //         (err) => {
-      //           console.log(err);
-      //         }
-      //     );
-      //     const responseTimeout = setTimeout(() => {
-      //       eh.unregisterBlockEvent(blockRegistration);
-      //       reject(new Error('Peer did not respond in a timely fashion!'));
-      //     }, JOIN_TIMEOUT);
-      //   });
-      // });
+      this._eventHubs.map(eh => {
+        eh.connect({ full_block: true });
+        return new Promise((resolve, reject) => {
+          let blockRegistration = eh.registerBlockEvent(
+            (block) => {
+              eh.unregisterBlockEvent(blockRegistration);
+              if (block.data.data.length === 1 && block.data.data[0].payload.header.channel_header.channel_id === this._channelName) {
+                console.log(chalk.white("Peers have joined channel"));
+                resolve();
+              } else {
+                reject(new Error('Peer did not join an expected channel.'));
+              }
+            },
+            (err) => {
+              console.log(err);
+            }
+          );
+          const responseTimeout = setTimeout(() => {
+            eh.unregisterBlockEvent(blockRegistration);
+            reject(new Error('Peer did not respond in a timely fashion!'));
+          }, JOIN_TIMEOUT);
+        })
+      });
     } catch (e) {
       console.log(`Error joining peer to channel. Error: ${e.message}`);
       throw e;
+    }
+  }
+
+  async checkInstalled() {
+    try {
+      const { chaincodes } = await this._client.queryInstalledChaincodes(this._peers[0]);
+      if (chaincodes[0].name == config.chaincodeId) {
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
     }
   }
 
@@ -182,17 +194,11 @@ class OrganizationClient extends EventEmitter {
       if (!Array.isArray(channels)) {
         return false;
       }
-      return channels.some(({channel_id}) => channel_id === this._channelName);
+      return channels.some(({ channel_id }) => channel_id === this._channelName);
     } catch (e) {
       return false;
     }
   }
-
-  async checkInstalled() {
-    console.log(await this._client.queryInstalledChaincodes(this._peers,true));
-    
-  }
-
 
   async checkInstantiated(chaincodeId, chaincodeVersion, chaincodePath) {
     let {
@@ -201,14 +207,13 @@ class OrganizationClient extends EventEmitter {
     if (!Array.isArray(chaincodes)) {
       return false;
     }
-    console.log(chaincodes);
     return chaincodes.some(cc =>
       cc.name === chaincodeId &&
       cc.path === chaincodePath &&
       cc.version === chaincodeVersion);
   }
 
-  async install(chaincodeId, chaincodeVersion, chaincodePath,chaincodeType='node') {
+  async install(chaincodeId, chaincodeVersion, chaincodePath, chaincodeType = 'node') {
     const request = {
       targets: this._peers,
       chaincodePath,
@@ -226,8 +231,6 @@ class OrganizationClient extends EventEmitter {
         `Error sending install proposal to peer! Error: ${e.message}`);
       throw e;
     }
-    console.log(results);
-    // hfc.client.queryInstalledChaincodes(this._peers,true);
     const proposalResponses = results[0];
     const allGood = proposalResponses
       .every(pr => pr.response && pr.response.status == 200);
@@ -236,14 +239,11 @@ class OrganizationClient extends EventEmitter {
 
   async instantiate(chaincodeId, chaincodeVersion, ...args) {
     let proposalResponses, proposal;
-
-    console.log("testad");
     const txId = this._client.newTransactionID();
-    
-    console.log("testad");
+
     try {
       const request = {
-        chaincodeType: 'golang',
+        chaincodeType: 'node',
         chaincodeId,
         chaincodeVersion,
         fcn: 'init',
@@ -260,8 +260,6 @@ class OrganizationClient extends EventEmitter {
       if (!allGood) {
         throw new Error(
           `Proposal rejected by some (all) of the peers: ${proposalResponses}`);
-      } else {
-        console.log("instantiate successful");
       }
     } catch (e) {
       throw e;
@@ -272,31 +270,32 @@ class OrganizationClient extends EventEmitter {
         proposalResponses,
         proposal
       };
-      // const deployId = txId.getTransactionID();
-      // const transactionCompletePromises = this._eventHubs.map(eh => {
-      //   eh.connect();
+      const deployId = txId.getTransactionID();
+      const transactionCompletePromises = this._eventHubs.map(eh => {
+        eh.connect();
 
-      //   return new Promise((resolve, reject) => {
-      //     // Set timeout for the transaction response from the current peer
-      //     const responseTimeout = setTimeout(() => {
-      //       eh.unregisterTxEvent(deployId);
-      //       reject(new Error('Peer did not respond in a timely fashion!'));
-      //     }, TRANSACTION_TIMEOUT);
+        return new Promise((resolve, reject) => {
+          // Set timeout for the transaction response from the current peer
+          const responseTimeout = setTimeout(() => {
+            eh.unregisterTxEvent(deployId);
+            reject(new Error('Peer did not respond in a timely fashion!'));
+          }, TRANSACTION_TIMEOUT);
 
-      //     eh.registerTxEvent(deployId, (tx, code) => {
-      //       clearTimeout(responseTimeout);
-      //       eh.unregisterTxEvent(deployId);
-      //       if (code != 'VALID') {
-      //         reject(new Error(
-      //           `Peer has rejected transaction with code: ${code}`));
-      //       } else {
-      //         resolve();
-      //       }
-      //     });
-      //   });
-      // });
-
+          eh.registerTxEvent(deployId, (tx, code) => {
+            clearTimeout(responseTimeout);
+            eh.unregisterTxEvent(deployId);
+            if (code != 'VALID') {
+              reject(new Error(
+                `Peer has rejected transaction with code: ${code}`));
+            } else {
+              resolve();
+            }
+          });
+        });
+      });
       this._channel.sendTransaction(request);
+
+      return true;
       // await transactionCompletePromises;
     } catch (e) {
       throw e;
@@ -324,8 +323,6 @@ class OrganizationClient extends EventEmitter {
       if (!allGood) {
         throw new Error(
           `Proposal rejected by some (all) of the peers: ${proposalResponses}`);
-      } else {
-        console.log('successfully submitted');
       }
     } catch (e) {
       throw e;
@@ -337,15 +334,15 @@ class OrganizationClient extends EventEmitter {
         proposal
       };
 
-      const result = await this._channel.sendTransaction(request);
-      if (result.status == 'SUCCESS') {
-        console.log("Submitted successfully");
-      } else {
-        console.log("Failed to submit")
-      }
+      const status = await this._channel.sendTransaction(request);
+
       try {
         const payload = proposalResponses[0].response.payload;
-        return unmarshalResult([payload]);
+        let response = {
+          transactionStatus: status,
+          result: unmarshalResult([payload])
+        }
+        return response;
       } catch (e) {
         throw e;
       }
@@ -516,7 +513,7 @@ function unmarshalBlock(block) {
 
 
 module.exports = {
-    orgClient: OrganizationClient,
-    wrapper: wrapError,
-    marshalArgs: marshalArgs
-  }
+  orgClient: OrganizationClient,
+  wrapper: wrapError,
+  marshalArgs: marshalArgs
+}
