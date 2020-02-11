@@ -11,7 +11,6 @@
 // - Add checkInstalled method for installed queries
 // - commented out instantiate eventhub as it left a handing await
 'use strict';
-
 const resolve = require('path');
 const EventEmitter = require('events');
 const config = require('./config');
@@ -302,7 +301,7 @@ class OrganizationClient extends EventEmitter {
     }
   }
 
-  async invoke(chaincodeId, chaincodeVersion, fcn, ...args) {
+  async transaction(chaincodeId, chaincodeVersion, fcn, ...args) {
     let proposalResponses, proposal;
     const txId = this._client.newTransactionID();
     try {
@@ -327,25 +326,15 @@ class OrganizationClient extends EventEmitter {
     } catch (e) {
       throw e;
     }
-
     try {
       const request = {
         proposalResponses,
         proposal
       };
 
-      const status = await this._channel.sendTransaction(request);
-
-      try {
-        const payload = proposalResponses[0].response.payload;
-        let response = {
-          transactionStatus: status,
-          result: unmarshalResult([payload])
-        }
-        return response;
-      } catch (e) {
-        throw e;
-      }
+      await this._channel.sendTransaction(request);
+      let test = proposalResponses[0].response.payload;
+      return test;
     } catch (e) {
       throw e;
     }
