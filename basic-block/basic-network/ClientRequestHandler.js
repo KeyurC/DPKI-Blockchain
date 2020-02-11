@@ -22,8 +22,7 @@ class ClientRequestHandler {
         const orgC = this.constructOrgClient();
         await orgC.login();
         await orgC.getOrgAdmin();
-        let SubCACrypto = await this.CASelectionAlgo();
-        await orgC.invoke(config.chaincodeId,config.chaincodeVersion,'invoke',this.domain,this.request,SubCACrypto);
+        await orgC.invoke(config.chaincodeId,config.chaincodeVersion,'invoke',this.domain,this.request);
 
     }
 
@@ -36,24 +35,6 @@ class ClientRequestHandler {
             config.orderer0,config.Org1.peer
             ,config.Org1.ca,config.Org1.admin);
         return orgC;
-    }
-
-    /**
-     * Function determines what signing CA, should be used for 
-     * the signing of the request. Random for now, but will use a 
-     * better algorithm in future iterations.
-     */
-    async CASelectionAlgo() {
-        const queryObj = new query.Query();
-
-        let CADomain = "SubCA";
-        let randomInt = Math.floor(Math.random() * 3);
-        console.log(randomInt);
-        let chosenCA = CADomain.concat('',randomInt);
-        
-        let cryptoMaterial = await queryObj.queryCC(chosenCA);
-        let pem = JSON.parse(cryptoMaterial);
-        return pem;
     }
 }
 
