@@ -70,6 +70,7 @@ var ABstore = class {
     }
     try {
       let payload = await method(stub, ret.params);
+      console.log("PAYLOAD " + payload);
       return shim.success(payload);
     } catch (err) {
       console.log(err);
@@ -87,7 +88,7 @@ var ABstore = class {
     }
     let randomInt = Math.floor(Math.random() * 3);
     let chosenCA = CADomain.concat('', randomInt);
-    
+
     let pem = JSON.parse(await stub.getState(chosenCA));
     let privateKey = forge.pki.privateKeyFromPem(pem.private_key);
     let rootCA = forge.pki.certificateFromPem(pem.certificate);
@@ -103,16 +104,33 @@ var ABstore = class {
     await stub.putState(CN, Buffer.from(forge.pki.certificateToPem(cert)));
   }
 
-  // Deletes an entity from state
-  async delete(stub, args) {
-    if (args.length != 1) {
-      throw new Error('Incorrect number of arguments. Expecting 1');
+
+  async verify(stub, args) {
+    let rootObj = JSON.parse(await stub.getState("ROOTCA"));
+    let rootcert = forge.pki.certificateFromPem(rootObj.certificate);
+
+    let cert = forge.pki.certificateFromPem(args[0]);
+
+    let issuer = cert.issuer.attributes[0].value;
+    let issuerObj = null;
+    try {
+      issuerObj = JSON.parse(await stub.getState(issuer));
+    } catch (err) {
+      console.log("Issuer does not exist or JSON Parsing fault");
+      return Buffer.from("Certificate does not belong to us");
     }
 
-    let A = args[0];
+    let issuerCert = forge.pki.certificateFromPem(issuerObj.certificate);
 
-    // Delete the key from the state in ledger
-    await stub.deleteState(A);
+    let certVerified = issuerCert.verify(cert);
+    if (certVerified) {
+      if (!rootcert.verify(issuerCert)) {
+        return Buffer.from("Certificate does not belong to us");
+      }
+    } else {
+      return Buffer.from("Certificate does not belong to us");
+    }
+    return Buffer.from("Certificate belongs to us");
   }
 
   // query callback representing the query of a chaincode
