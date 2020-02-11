@@ -5,6 +5,7 @@ const register = require('./registerUser.js');
 const CA = require('./CA.js');
 const fs = require('fs-extra');
 const path = require('path');
+const chalk = require('chalk');
 
 // console.log(config.Org1);
 //Fills in values of IBMUtils constructor, which uses these for all following methods
@@ -15,20 +16,59 @@ orgC = new utils.orgClient(config.channelName,config.orderer0,config.Org1.peer,c
  * SetUP function
  */
 async function setUP() {
-    await orgC.login();
-    await orgC.getOrgAdmin();
-    if(!await orgC.checkChannelMembership()){
-        await channelManager();
-    }
-    await install();
-    await instantiate();
-    if (fs.existsSync(config.walletPath)) {
-        fs.removeSync(config.walletPath);
-    } 
-    await enroll.enrollAdmin();
-    await register.register();
-    process.exit(1);
+    // await orgC.login();
+    // console.log("test" + await orgC.checkInstantiated(config.chaincodeId,
+    //     config.chaincodeVersion,
+    //     config.chaincodePath));
+    let tick = chalk.green("✔");
+    let cross = chalk.red("✖");
+    orgC.login().then(value => {
+        console.log(chalk.bold.white("Login ") + tick);
+        orgC.getOrgAdmin().then(value => {
+            orgC.checkChannelMembership().then(value => {
+                if (!value) {
+                    channelManager().then(value => {
+                        install().then(value => {
+                            console.log(chalk.bold.white("Chaincode installed " + tick))
+                            instantiate().then(value => {
+                                console.log(chalk.bold.white("Chaincode Instantiated " + tick))
+                                if (fs.existsSync(config.walletPath)) {
+                                    fs.removeSync(config.walletPath);
+                                }
+                                enroll.enrollAdmin().then(value => {
+                                    if (value) {
+                                        console.log(chalk.bold.white("Enrollment ") + tick);
+                                        register.register().then(console.log(chalk.white("Registration ") + tick));
+                                        process.exit(1);
+                                    } else {
+                                        throw("Failled to enroll users " + value);
+                                    }
+                                    
+                                }).catch(error => {
+                                    console.log(chalk.bold.white("Enrollment ") + cross);
+                                    throw ("Enrollment Error " + error);
+                                });
+                            }).catch(error => {
+                                console.log("Chaincode Instantiation " + cross + error)
+                            });
+                        }).catch(error => {
+                            console.log("Chaincode Installion " + cross + error)
+                        });
+                    }).catch(error => {
+                        console.log(chalk.bold.white("Channel creation " + cross))
+                        console.log(chalk.bold.white("Peers added " + cross))
+                        console.log(error);
+                    });
+                }
+            })
+        }).catch(err => {
+            console.log(chalk.red.bold("Failed to get admin crypto material and create user " + cross + err))
+        })
+    }).catch(err => {
+        console.log(chalk.red("login " + cross  + err))
+    });
 }
+
 
 /**
  * Creates the channels and adds peers to it
@@ -36,16 +76,14 @@ async function setUP() {
 async function channelManager() {
     if(!await orgC.checkChannelMembership()){
         const channelResponse = await orgC.createChannel(config.channelConfig);
-        console.log("test");
         if (channelResponse.status == "SUCCESS") {
-            console.log("New channel created");
+            console.log(chalk.white("channel created: " + config.channelName));
+            await orgC.joinChannel();
+            orgC.connectAndRegisterBlockEvent();
+            orgC.initialize();
         } else {
-            console.log("Failed to create channel");
+            throw error(chalk.red("Error generating channel"));
         }
-        await orgC.joinChannel();
-        orgC.connectAndRegisterBlockEvent();
-        orgC.initialize();
-
     }
 }
 
@@ -53,9 +91,13 @@ async function channelManager() {
  * Installs the chaincode
  */
 async function install() {
-    console.log("Installing");
-    console.log(await orgC.install(config.chaincodeId,config.chaincodeVersion,config.chaincodePath,'node'));
-    // orgC.checkInstalled()
+    let response = await orgC.checkInstalled();
+    if (!response) {
+         await orgC.install(config.chaincodeId,
+        config.chaincodeVersion,config.chaincodePath,'node');
+    }
+   
+   
 }
 
 /**
@@ -65,14 +107,13 @@ async function instantiate() {
     if (!await orgC.checkInstantiated(config.chaincodeId,
         config.chaincodeVersion,
         config.chaincodePath)) {
-            console.log("Instantiating");
             const ca = new CA();
             ca.generateKeyPair();
             let pem = ca.selfsign();
             let CaList = ca.generateSubCA(3);
             CaList.push(pem);
-            
-            await orgC.instantiate(config.chaincodeId,config.chaincodeVersion,CaList,'ROOTCA');
+            console.log(CaList);
+            console.log(await orgC.instantiate(config.chaincodeId,config.chaincodeVersion,CaList,'ROOTCA'));
         }
     
 }
