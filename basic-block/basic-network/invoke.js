@@ -9,16 +9,8 @@ class Invoke {
     async invokeCC(from,to) {
         await orgC.login();
         await orgC.getOrgAdmin();
-        const pem = await this.selectCA();
         await orgC.invoke(config.chaincodeId,config.chaincodeVersion,'invoke',from,to,pem);
 
-    }
-
-    async selectCA() {
-        const query1 = new query.Query();
-        var value = await query1.queryCC('SubCA1');
-        var pem = JSON.parse(value);
-        return pem;
     }
 }
 
