@@ -5,18 +5,8 @@
 */
 
 const shim = require('fabric-shim');
-const util = require('util');
 const forge = require('node-forge');
-const assert = require('assert');
-const crypto = require('crypto');
-
-const algo = 'aes-128-cbc';
-const inEncoding = "utf-8";
-const outEncoding = "hex";
-
-const sharedSecret = crypto.randomBytes(16);
-const IV = crypto.randomBytes(16);
-
+const CADomain = "SubCA";
 
 var ABstore = class {
 
@@ -29,16 +19,17 @@ var ABstore = class {
 
     let tmpList = this.parse(CAList);
 
+
     // let cert = pem.certificate;
     // let pk = pem.privateKey;
     // let ciper = crypto.createCipheriv(algo,sharedSecret,IV);
 
     try {
-      for (let i = 0; i < tmpList.length-1; i++) {
+      for (let i = 0; i < tmpList.length - 1; i++) {
         let cn = "SubCA" + i;
         await stub.putState(cn, Buffer.from(tmpList[i]));
       }
-      await stub.putState(CN, Buffer.from(tmpList[tmpList.length-1]));
+      await stub.putState(CN, Buffer.from(tmpList[tmpList.length - 1]));
       return shim.success();
     } catch (err) {
       return shim.error(err);
@@ -86,18 +77,18 @@ var ABstore = class {
     }
   }
 
-
-
   async invoke(stub, args) {
     let CN = args[0];
     let certreq;
     try {
       certreq = forge.pki.certificationRequestFromPem(args[1])
     } catch (error) {
-      console.error("failed for cert request" + error)
+      console.error("Failed to obtain/convert CSR" + error)
     }
-
-    let pem = JSON.parse(args[2]);
+    let randomInt = Math.floor(Math.random() * 3);
+    let chosenCA = CADomain.concat('', randomInt);
+    
+    let pem = JSON.parse(await stub.getState(chosenCA));
     let privateKey = forge.pki.privateKeyFromPem(pem.private_key);
     let rootCA = forge.pki.certificateFromPem(pem.certificate);
 
