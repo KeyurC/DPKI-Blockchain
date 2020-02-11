@@ -22,7 +22,7 @@ class ClientRequestHandler {
         const orgC = this.constructOrgClient();
         await orgC.login();
         await orgC.getOrgAdmin();
-        await orgC.invoke(config.chaincodeId,config.chaincodeVersion,'invoke',this.domain,this.request);
+        await orgC.transaction(config.chaincodeId,config.chaincodeVersion,'invoke',this.domain,this.request);
 
     }
 
