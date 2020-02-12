@@ -1,6 +1,6 @@
 const chai = require('chai');
 const expect = chai.expect;
-const Client = require('./../client.js');
+const Client = require('../src/client.js');
 const forge = require('node-forge');
 
 //Test checks if private key is not null and undefined
@@ -38,7 +38,7 @@ describe('KeyLengthTest', function () {
 //ensuring integrity
 describe('CertificateIntegrityTest', function () {
     it('Certificate request returned has wrong attributes', function () {
-        const certValue = ['example.org','UK','Middlesex','isleworth','DPKI','Test']
+        const certValue = ['example1.org','UK','Middlesex','isleworth','DPKI','Test']
         const client = new Client();
         client.generateKeyPair();
         let cert = forge.pki.certificationRequestFromPem(client.generateCSR().certreq);

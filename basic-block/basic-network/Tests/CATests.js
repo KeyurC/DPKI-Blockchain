@@ -1,6 +1,6 @@
 const chai = require('chai');
 var expect = chai.expect;
-const CA = require('./../CA.js');
+const CA = require('../src/CA.js');
 const forge = require('node-forge');
 
 //Test checks if private key is not null and undefined

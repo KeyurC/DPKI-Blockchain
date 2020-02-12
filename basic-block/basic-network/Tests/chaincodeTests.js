@@ -1,10 +1,9 @@
 const chai = require('chai');
 var expect = chai.expect;
-const Client = require('./../client.js');
-const utils = require('../IBMUtils.js');
+const Client = require('../src/client.js');
+const utils = require('../utilities/IBMUtils.js');
 const forge = require('node-forge');
-const fs = require('fs-extra');
-const { config } = require('../config.js');
+const { config } = require('../utilities/config.js');
 orgC = new utils.orgClient(config.channelName, config.orderer0, config.Org1.peer, config.Org1.ca, config.Org1.admin);
 
 const client = new Client();
