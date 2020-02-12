@@ -1,6 +1,5 @@
 const utils = require('./IBMUtils.js');
 const {config} = require('./config.js');
-const query = require('./query.js')
 
 /**
  * Class is responsible for communicating with the blockchain,
