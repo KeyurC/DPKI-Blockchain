@@ -292,9 +292,7 @@ class OrganizationClient extends EventEmitter {
           });
         });
       });
-      this._channel.sendTransaction(request);
-
-      return true;
+      await this._channel.sendTransaction(request);
       // await transactionCompletePromises;
     } catch (e) {
       throw e;
@@ -348,7 +346,9 @@ class OrganizationClient extends EventEmitter {
       args: marshalArgs(args),
       txId: this._client.newTransactionID(),
     };
-    return unmarshalResult(await this._channel.queryByChaincode(request));
+    let response = await this._channel.queryByChaincode(request);
+    // console.log(response.toString());
+    return unmarshalResult(response.toString());
   }
 
   async getBlocks(noOfLastBlocks) {
