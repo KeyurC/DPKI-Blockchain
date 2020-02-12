@@ -1,25 +1,18 @@
 const utils = require('./IBMUtils.js');
-const {config} = require('./config.js');
-const enroll = require('./enrollAdmin.js');
-const register = require('./registerUser.js');
+const { config } = require('./config.js');
 const CA = require('./CA.js');
 const fs = require('fs-extra');
-const path = require('path');
 const chalk = require('chalk');
 
 // console.log(config.Org1);
 //Fills in values of IBMUtils constructor, which uses these for all following methods
 
-orgC = new utils.orgClient(config.channelName,config.orderer0,config.Org1.peer,config.Org1.ca,config.Org1.admin);
+orgC = new utils.orgClient(config.channelName, config.orderer0, config.Org1.peer, config.Org1.ca, config.Org1.admin);
 
 /**
  * SetUP function
  */
 async function setUP() {
-    // await orgC.login();
-    // console.log("test" + await orgC.checkInstantiated(config.chaincodeId,
-    //     config.chaincodeVersion,
-    //     config.chaincodePath));
     let tick = chalk.green("✔");
     let cross = chalk.red("✖");
     orgC.login().then(value => {
@@ -35,19 +28,8 @@ async function setUP() {
                                 if (fs.existsSync(config.walletPath)) {
                                     fs.removeSync(config.walletPath);
                                 }
-                                enroll.enrollAdmin().then(value => {
-                                    if (value) {
-                                        console.log(chalk.bold.white("Enrollment ") + tick);
-                                        register.register().then(console.log(chalk.white("Registration ") + tick));
-                                        process.exit(1);
-                                    } else {
-                                        throw("Failled to enroll users " + value);
-                                    }
-                                    
-                                }).catch(error => {
-                                    console.log(chalk.bold.white("Enrollment ") + cross);
-                                    throw ("Enrollment Error " + error);
-                                });
+                                process.exit(1);
+
                             }).catch(error => {
                                 console.log("Chaincode Instantiation " + cross + error)
                             });
@@ -65,7 +47,7 @@ async function setUP() {
             console.log(chalk.red.bold("Failed to get admin crypto material and create user " + cross + err))
         })
     }).catch(err => {
-        console.log(chalk.red("login " + cross  + err))
+        console.log(chalk.red("login " + cross + err))
     });
 }
 
@@ -74,7 +56,7 @@ async function setUP() {
  * Creates the channels and adds peers to it
  */
 async function channelManager() {
-    if(!await orgC.checkChannelMembership()){
+    if (!await orgC.checkChannelMembership()) {
         const channelResponse = await orgC.createChannel(config.channelConfig);
         if (channelResponse.status == "SUCCESS") {
             console.log(chalk.white("channel created: " + config.channelName));
@@ -93,11 +75,11 @@ async function channelManager() {
 async function install() {
     let response = await orgC.checkInstalled();
     if (!response) {
-         await orgC.install(config.chaincodeId,
-        config.chaincodeVersion,config.chaincodePath,'node');
+        await orgC.install(config.chaincodeId,
+            config.chaincodeVersion, config.chaincodePath, 'node');
     }
-   
-   
+
+
 }
 
 /**
@@ -107,14 +89,15 @@ async function instantiate() {
     if (!await orgC.checkInstantiated(config.chaincodeId,
         config.chaincodeVersion,
         config.chaincodePath)) {
-            const ca = new CA();
-            ca.generateKeyPair();
-            let pem = ca.selfsign();
-            let CaList = ca.generateSubCA(3);
-            CaList.push(pem);
-            console.log(CaList);
-            console.log(await orgC.instantiate(config.chaincodeId,config.chaincodeVersion,CaList,'ROOTCA'));
-        }
-    
+        const ca = new CA();
+        ca.generateKeyPair();
+        let pem = ca.selfsign();
+        let CaList = ca.generateSubCA(3);
+        CaList.push(pem);
+        console.log(CaList);
+        await orgC.instantiate(config.chaincodeId, config.chaincodeVersion, CaList, 'ROOTCA');
+        
+    }
+
 }
 setUP();
