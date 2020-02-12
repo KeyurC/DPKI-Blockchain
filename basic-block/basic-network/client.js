@@ -25,6 +25,10 @@ class Client {
     this.keys = forge.pki.rsa.generateKeyPair(1024);
   }
 
+  get CertificateRequest() {
+    return this.CSR;
+  }
+
   generateCSR() {
     var certificateReq = forge.pki.createCertificationRequest();
     certificateReq.publicKey = this.keys.publicKey;
@@ -50,11 +54,11 @@ class Client {
 
     certificateReq.sign(this.keys.privateKey)
 
-    var CSR = {
+    this.CSR = {
       certreq: forge.pki.certificationRequestToPem(certificateReq),
       cn: certificateReq.subject.attributes[0].value
     };
-    return CSR;
+    return this.CSR;
   }
 
 }
