@@ -28,6 +28,7 @@ async function setUP() {
                                 if (fs.existsSync(config.walletPath)) {
                                     fs.removeSync(config.walletPath);
                                 }
+                                orgC.currentPeers();
                                 process.exit(1);
 
                             }).catch(error => {

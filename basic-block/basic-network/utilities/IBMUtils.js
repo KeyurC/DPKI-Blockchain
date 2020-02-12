@@ -50,15 +50,24 @@ class OrganizationClient extends EventEmitter {
 
     this._channel.addOrderer(orderer);
 
-    const defaultPeer = this._client.newPeer(peerConfig.url, {
-      pem: peerConfig.pem,
-      'ssl-target-name-override': peerConfig.hostname
-    });
+    for (let key in peerConfig) {
+      if (peerConfig.hasOwnProperty(key)) {
+        let tmp = JSON.stringify(peerConfig[key]);
+        let obj = JSON.parse(tmp);
+        const peer = this._client.newPeer(obj.url, {
+          name: obj.hostname,
+          'ssl-target-name-override': obj.hostname
+        });
+        this._peers.push(peer);
+      }
+    }
+    for (let i = 0; i < this._peers.length; i++) {
+      this._channel.addPeer(this._peers[i]);
+    }
 
-    this._peers.push(defaultPeer);
-    this._channel.addPeer(defaultPeer);
     let defaultEventHub;
-    defaultEventHub = this._channel.newChannelEventHub(defaultPeer);
+    //Only need a single peer for channeleventhub as peers will be part of same channel
+    defaultEventHub = this._channel.newChannelEventHub(this._peers[0]);
     this._eventHubs.push(defaultEventHub);
     this._adminUser = null;
   }
@@ -67,7 +76,7 @@ class OrganizationClient extends EventEmitter {
     try {
       this._client.setStateStore(
         await hfc.newDefaultKeyValueStore({
-          path: `./${this._peerConfig.hostname}`
+          path: `../${this._peerConfig.peer0.hostname}`
         }));
       this._adminUser = await getSubmitter(
         this._client, "admin", "adminpw", this._caConfig);
@@ -113,6 +122,10 @@ class OrganizationClient extends EventEmitter {
       console.log(`Failed to initialize chain. Error: ${e.message}`);
       throw e;
     }
+  }
+
+  async currentPeers() {
+    console.log(this._channel.getPeersForOrg('Org1MSP'));
   }
 
   async createChannel(envelope) {
@@ -240,11 +253,33 @@ class OrganizationClient extends EventEmitter {
     let proposalResponses, proposal;
     const txId = this._client.newTransactionID();
 
+    let endosementpolicy = {
+      "identities": [
+          {
+              "role": {
+                  "name": "member",
+                  "mspId": "Org1MSP"
+              }
+          }
+      ],
+      "policy": {
+          "2-of": [
+              {
+                  "signed-by": 0
+              },
+              {
+                  "signed-by": 0
+              },
+          ]
+      }
+  };
+
     try {
       const request = {
         chaincodeType: 'node',
         chaincodeId,
         chaincodeVersion,
+        'endorsement-policy':endosementpolicy,
         fcn: 'init',
         args: marshalArgs(args),
         txId
@@ -346,9 +381,9 @@ class OrganizationClient extends EventEmitter {
       args: marshalArgs(args),
       txId: this._client.newTransactionID(),
     };
-    let response = await this._channel.queryByChaincode(request);
-    // console.log(response.toString());
-    return unmarshalResult(response.toString());
+    let responsePayloads = await this._channel.queryByChaincode(request);
+  
+    return unmarshalResult(responsePayloads[0].toString());
   }
 
   async getBlocks(noOfLastBlocks) {
