@@ -5,42 +5,68 @@ const path = require('path');
 
 // const basePath = resolve(__dirname, '../../certs');
 // const readCryptoFile =
-  // filename => readFileSync(resolve(basePath)).toString();
+// filename => readFileSync(resolve(basePath)).toString();
 const config = {
   isCloud: false,
-  channelName: 'mychannel',
-  channelConfig: readFileSync(path.resolve(__dirname,'../' ,'basic-network/config/channel.tx')),
-  chaincodeId: 'abstore',
-  chaincodeVersion: 'v45',
-  chaincodePath: '../chaincode/certchain/javascript/',
-  walletPath: path.resolve(__dirname,'wallet'),
   orderer0: {
     hostname: 'orderer.example.com',
     url: 'grpc://localhost:7050'
   },
   Org1: {
+    channel: {
+      channelName: 'mychannel',
+      channelConfig: readFileSync(path.resolve(__dirname, '../', 'basic-network/config/channel.tx')),
+    },
+    chaincode: {
+      chaincodeId: 'abstore',
+      chaincodeVersion: 'v1',
+      chaincodePath: '../chaincode/certchain/javascript/'
+    },
     peer: {
       peer0: {
         hostname: 'peer0.org1.example.com',
         url: 'grpc://localhost:7051',
         eventHubUrl: 'grpc://localhost:7053',
         // pem: readFileSync(path.resolve(__dirname,'basic-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt')).toString()
-      },
-      peer1: {
-        hostname: 'peer1.org1.example.com',
-        url: 'grpc://localhost:8051',
-        // pem: readFileSync(path.resolve(__dirname,'basic-network/crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls/ca.crt')).toString()
-      },
-      
+      }
     },
     ca: {
-      hostname: 'ca.example.com',
+      hostname: 'ca0.example.com',
       url: 'http://localhost:7054',
       mspId: 'Org1MSP'
     },
     admin: {
-      cert: readFileSync(path.resolve(__dirname,'../basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/admincerts/Admin@org1.example.com-cert.pem')),
-      key: readFileSync(path.resolve(__dirname,'../basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/1ffefeae975e50ac514bddbc9c488549699f1b1fc098bc1fae7c1a0b903647e7_sk'))
+      cert: readFileSync(path.resolve(__dirname, '../basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/admincerts/Admin@org1.example.com-cert.pem')),
+      key: readFileSync(path.resolve(__dirname, '../basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/4929cb1245650670c1b7a4018a8a5c37c8cdaf62084d612fe0df432098602901_sk'))
+    }
+  },
+
+  Org2: {
+    channel: {
+      channelName: 'mychannel2',
+      channelConfig: readFileSync(path.resolve(__dirname, '../', 'basic-network/config/channel2.tx')),
+    },
+    chaincode: {
+      chaincodeId: 'revocation',
+      chaincodeVersion: 'v1',
+      chaincodePath: '../chaincode/revchain/javascript/'
+    },
+    peer: {
+      peer0: {
+        hostname: 'peer0.org2.example.com',
+        url: 'grpc://localhost:8051',
+        eventHubUrl: 'grpc://localhost:8053',
+        // pem: readFileSync(path.resolve(__dirname,'basic-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt')).toString()
+      }
+    },
+    ca: {
+      hostname: 'ca1.example.com',
+      url: 'http://localhost:8054',
+      mspId: 'Org2MSP'
+    },
+    admin: {
+      cert: readFileSync(path.resolve(__dirname, '../basic-network/crypto-config/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/admincerts/Admin@org2.example.com-cert.pem')),
+      key: readFileSync(path.resolve(__dirname, '../basic-network/crypto-config/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/keystore/e1f979bfea9c93d87954112f27b7e36ea4590d9edbb36d7d1d0b99825ae78023_sk'))
     }
   }
 };
@@ -67,4 +93,4 @@ const config = {
 const DEFAULT_CONTRACT_TYPES = [];
 
 
-module.exports = {config,DEFAULT_CONTRACT_TYPES}
+module.exports = { config, DEFAULT_CONTRACT_TYPES }
