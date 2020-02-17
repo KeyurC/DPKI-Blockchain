@@ -83,9 +83,12 @@ class CA {
           cert.setIssuer(CA.issuer.attributes);
           cert.sign(PK);
           
+          let serial = "S"+ i + "0000";
+
           let pem = {
             certificate: forge.pki.certificateToPem(cert),
-            privateKey: forge.pki.privateKeyToPem(keys.privateKey)
+            privateKey: forge.pki.privateKeyToPem(keys.privateKey),
+            serial : serial
           }
           subCaList.push(pem);
 
@@ -97,7 +100,3 @@ class CA {
 }
 
 module.exports = CA
-
-// const ca = new CA();
-// ca.generateKeyPair();
-// ca.selfsign();
