@@ -13,13 +13,33 @@ const config = {
     url: 'grpc://localhost:7050'
   },
   Org1: {
+    // endorsementpolicy = {
+    //   "identities": [
+    //     {
+    //       "role": {
+    //         "name": "member",
+    //         "mspId": "Org1MSP"
+    //       }
+    //     }
+    //   ],
+    //   "policy": {
+    //     "2-of": [
+    //       {
+    //         "signed-by": 0
+    //       },
+    //       {
+    //         "signed-by": 0
+    //       },
+    //     ]
+    //   }
+    // },
     channel: {
       channelName: 'mychannel',
       channelConfig: readFileSync(path.resolve(__dirname, '../', 'basic-network/config/channel.tx')),
     },
     chaincode: {
       chaincodeId: 'abstore',
-      chaincodeVersion: 'v1',
+      chaincodeVersion: 'v2',
       chaincodePath: '../chaincode/certchain/javascript/'
     },
     peer: {
@@ -42,6 +62,26 @@ const config = {
   },
 
   Org2: {
+    // endorsementpolicy = {
+    //   "identities": [
+    //     {
+    //       "role": {
+    //         "name": "member",
+    //         "mspId": "Org2MSP"
+    //       }
+    //     }
+    //   ],
+    //   "policy": {
+    //     "2-of": [
+    //       {
+    //         "signed-by": 0
+    //       },
+    //       {
+    //         "signed-by": 0
+    //       },
+    //     ]
+    //   }
+    // },
     channel: {
       channelName: 'mychannel2',
       channelConfig: readFileSync(path.resolve(__dirname, '../', 'basic-network/config/channel2.tx')),
