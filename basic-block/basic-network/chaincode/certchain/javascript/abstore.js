@@ -16,20 +16,17 @@ var ABstore = class {
     let args = ret.params;
     let CAList = args[0];
     let CN = args[1];
-
-    let tmpList = this.parse(CAList);
-
-
-    // let cert = pem.certificate;
-    // let pk = pem.privateKey;
-    // let ciper = crypto.createCipheriv(algo,sharedSecret,IV);
-
+    let tmpList = JSON.parse(CAList);
+    console.log(tmpList[1]);
     try {
       for (let i = 0; i < tmpList.length - 1; i++) {
         let cn = "SubCA" + i;
-        await stub.putState(cn, Buffer.from(tmpList[i]));
+        console.log(tmpList[i]);
+        let tmp = JSON.stringify(tmpList[i]);
+        await stub.putState(cn, Buffer.from(tmp));
       }
-      await stub.putState(CN, Buffer.from(tmpList[tmpList.length - 1]));
+
+      await stub.putState(CN, Buffer.from(JSON.stringify(tmpList[tmpList.length - 1])));
       return shim.success();
     } catch (err) {
       return shim.error(err);
@@ -89,20 +86,41 @@ var ABstore = class {
     }
     let randomInt = Math.floor(Math.random() * 3);
     let chosenCA = CADomain.concat('', randomInt);
+    console.log(chosenCA);
+    let test = await stub.getState(chosenCA);
+    console.log("TEST HERE " + test);
 
-    let pem = JSON.parse(await stub.getState(chosenCA));
+    let pem = JSON.parse(test);
+
     let privateKey = forge.pki.privateKeyFromPem(pem.private_key);
     let rootCA = forge.pki.certificateFromPem(pem.certificate);
+    let serial = pem.serial;
+    let value = serial.substring(2, serial.length);
+    let serialNo = parseInt(value) + 1;
+    let defaultPadding = "0000";
+    let padding = value.length - serialNo.toString().length
+    let serialP2 = defaultPadding.substring(0, padding-1) + serialNo;
+    let newSerial = serial.substring(0,2) + serialP2;
+
+    let CA = {
+      certificate: pem.certificate,
+      private_key: pem.private_key,
+      serial: newSerial
+    }
+
+    await stub.putState(chosenCA,Buffer.from(JSON.stringify(CA)));
 
     let cert = forge.pki.createCertificate();
     cert.publicKey = certreq.publicKey;
     cert.validity.notBefore = new Date();
     cert.validity.notAfter = new Date();
+    cert.serialNumber = Buffer(serial).toString('hex');
     cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1);
     cert.setSubject(certreq.subject.attributes);
     cert.setIssuer(rootCA.subject.attributes);
     cert.sign(privateKey);
     console.log(forge.pki.certificateToPem(cert));
+    
     await stub.putState(CN, Buffer.from(forge.pki.certificateToPem(cert)));
   }
 
@@ -148,7 +166,14 @@ var ABstore = class {
     let Avalbytes = await stub.getState(A);
 
     // Prevents any private keys being retrieved outside the blockchain
-    let privatekey = JSON.parse(Avalbytes).private_key;
+
+    let privatekey;
+
+    try {
+      privatekey = JSON.parse(Avalbytes).private_key;
+    } catch(e) {
+      console.log("Not a intermediate CA" + e);
+    }
     if (typeof privatekey != 'undefined') {
       Avalbytes = Buffer.from(JSON.parse(Avalbytes).certificate);
     }
