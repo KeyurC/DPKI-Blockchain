@@ -71,6 +71,7 @@ var ABstore = class {
     try {
       let payload = await method(stub, ret.params);
       console.log("PAYLOAD " + payload);
+      console.log(await stub.getState('example1.org'));
       return shim.success(payload);
     } catch (err) {
       console.log(err);
@@ -101,6 +102,7 @@ var ABstore = class {
     cert.setSubject(certreq.subject.attributes);
     cert.setIssuer(rootCA.subject.attributes);
     cert.sign(privateKey);
+    console.log(forge.pki.certificateToPem(cert));
     await stub.putState(CN, Buffer.from(forge.pki.certificateToPem(cert)));
   }
 
@@ -144,6 +146,13 @@ var ABstore = class {
 
     // Get the state from the ledger
     let Avalbytes = await stub.getState(A);
+
+    // Prevents any private keys being retrieved outside the blockchain
+    let privatekey = JSON.parse(Avalbytes).private_key;
+    if (typeof privatekey != 'undefined') {
+      Avalbytes = Buffer.from(JSON.parse(Avalbytes).certificate);
+    }
+
     if (!Avalbytes) {
       jsonResp.error = 'Failed to get state for ' + A;
       throw new Error(JSON.stringify(jsonResp));
