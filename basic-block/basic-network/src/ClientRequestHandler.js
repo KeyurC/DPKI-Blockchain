@@ -1,13 +1,13 @@
 const utils = require('../utilities/IBMUtils.js');
-const {config} = require('../utilities/config.js');
+const { config } = require('../utilities/config.js');
 
 /**
  * Class is responsible for communicating with the blockchain,
  * and send the CSR to the blockchain for it to be signed and verified.
  */
 class ClientRequestHandler {
-    
-    constructor(CSR,domain) {
+
+    constructor(CSR, domain) {
         this.request = CSR;
         this.domain = domain;
         this.invokeChaincode();
@@ -21,7 +21,7 @@ class ClientRequestHandler {
         const orgC = this.constructOrgClient();
         await orgC.login();
         await orgC.getOrgAdmin();
-        await orgC.transaction(config.chaincodeId,config.chaincodeVersion,'invoke',this.domain,this.request);
+        await orgC.transaction(config.Org1.chaincode.chaincodeId, config.Org1.chaincode.dchaincodeVersion, 'invoke', this.domain, this.request);
 
     }
 
@@ -30,11 +30,10 @@ class ClientRequestHandler {
      * methods.
      */
     constructOrgClient() {
-        const orgC = new utils.orgClient(config.channelName,
-            config.orderer0,config.Org1.peer
-            ,config.Org1.ca,config.Org1.admin);
-        return orgC;
+        const chaincode1 = new utils.orgClient(config.Org1.channel.channelName, config.orderer0,
+            config.Org1.peer, config.Org1.ca, config.Org1.admin);
+        return chaincode1;
     }
 }
 
-module.exports = {ClientRequestHandler}
+module.exports = { ClientRequestHandler }
