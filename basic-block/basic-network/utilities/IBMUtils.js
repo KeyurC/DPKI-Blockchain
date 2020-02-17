@@ -72,6 +72,9 @@ class OrganizationClient extends EventEmitter {
     this._adminUser = null;
   }
 
+  async test() {
+    console.log("TEST " + this._channelName);
+  }
   async login() {
     try {
       this._client.setStateStore(
@@ -140,7 +143,6 @@ class OrganizationClient extends EventEmitter {
       txId
     };
     const response = await this._client.createChannel(request);
-
     // Wait for 5sec to create channel
     await new Promise(resolve => {
       setTimeout(resolve, 5000);
@@ -166,7 +168,7 @@ class OrganizationClient extends EventEmitter {
             (block) => {
               eh.unregisterBlockEvent(blockRegistration);
               if (block.data.data.length === 1 && block.data.data[0].payload.header.channel_header.channel_id === this._channelName) {
-                console.log(chalk.white("Peers have joined channel"));
+                // console.log(chalk.white("Peers have joined channel"));
                 resolve();
               } else {
                 reject(new Error('Peer did not join an expected channel.'));
@@ -279,7 +281,6 @@ class OrganizationClient extends EventEmitter {
         chaincodeType: 'node',
         chaincodeId,
         chaincodeVersion,
-        'endorsement-policy':endosementpolicy,
         fcn: 'init',
         args: marshalArgs(args),
         txId
@@ -382,7 +383,6 @@ class OrganizationClient extends EventEmitter {
       txId: this._client.newTransactionID(),
     };
     let responsePayloads = await this._channel.queryByChaincode(request);
-  
     return unmarshalResult(responsePayloads[0].toString());
   }
 
