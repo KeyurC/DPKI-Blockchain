@@ -13,6 +13,8 @@
 	"license": "Apache-2.0",
 	"dependencies": {
 		"fabric-shim": "unstable",
-		"node-forge": "^0.9.1"
+		"node-forge": "^0.9.1",
+		"object-hash": "^2.0.3",
+		"os": "^0.1.1"
 	}
 }
