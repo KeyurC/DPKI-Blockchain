@@ -1,5 +1,7 @@
 const utils = require('../utilities/IBMUtils.js');
 const { config } = require('../utilities/config.js');
+const forge = require('node-forge');
+const hash = require('object-hash');
 
 /**
  * Class is responsible for communicating with the blockchain,
@@ -21,7 +23,8 @@ class ClientRequestHandler {
         const orgC = this.constructOrgClient();
         await orgC.login();
         await orgC.getOrgAdmin();
-        await orgC.transaction(config.Org1.chaincode.chaincodeId, config.Org1.chaincode.dchaincodeVersion, 'invoke', this.domain, this.request);
+        let hashedSubject = this.generateHashOfCSR();
+        await orgC.transaction(config.Org1.chaincode.chaincodeId, config.Org1.chaincode.dchaincodeVersion, 'invoke', this.domain, this.request,hashedSubject);
 
     }
 
@@ -34,6 +37,13 @@ class ClientRequestHandler {
             config.Org1.peer, config.Org1.ca, config.Org1.admin);
         return chaincode1;
     }
-}
 
+    generateHashOfCSR() {
+        let CSR = forge.pki.certificationRequestFromPem(this.request);
+        let subject = CSR.subject.attributes;
+        let hasedSubject = hash(subject);
+        console.log(hasedSubject);
+        return hasedSubject;
+    }
+}
 module.exports = { ClientRequestHandler }
