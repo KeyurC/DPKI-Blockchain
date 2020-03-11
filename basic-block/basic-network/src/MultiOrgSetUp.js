@@ -1,8 +1,10 @@
 const utils = require('../utilities/IBMUtils.js');
 const { config } = require('../utilities/config.js');
 const CA = require('./CA.js');
-const fs = require('fs-extra');
+const fs = require('fs');
 const chalk = require('chalk');
+const { Docker } = require('node-docker-api');
+const docker = new Docker();
 
 let channelConfig = [];
 let channelName = [];;
@@ -141,15 +143,45 @@ async function setUP() {
         let pem = ca.selfsign();
         let CaList = ca.generateSubCA(3);
         CaList.push(pem);
-        await chaincode1.instantiate(chaincode[0].chaincodeId, chaincode[0].chaincodeVersion, CaList, 'ROOTCA');
+        await chaincode1.instantiate('org1', chaincode[0].chaincodeId, chaincode[0].chaincodeVersion, CaList, 'ROOTCA');
     }
     if (!await chaincode2.checkInstantiated(chaincode[1].chaincodeId,
         chaincode[1].chaincodeVersion,
         chaincode[1].chaincodePath)) {
-        await chaincode2.instantiate(chaincode[1].chaincodeId, chaincode[1].chaincodeVersion, "2232313123", 'revoked.org');
+        await chaincode2.instantiate('org2', chaincode[1].chaincodeId, chaincode[1].chaincodeVersion, "2232313123", 'revoked.org');
     }
 
-    process.exit(0);
+    let containersJson = {};
+
+    docker.container.list()
+        .then((containers) => {
+            let containerList = containers;
+            let keys = Object.keys(containerList);
+            for (keys in containerList) {
+                let data = containerList[keys].data;
+                let id = data.Id.toString().substr(0, 12);
+                let name = data.Names;
+
+                let containerInfo = {
+                    ID: id,
+                    Names: name
+                }
+                if (name.toString().includes('dev-peer')) {
+                    containersJson['Container' + keys] = containerInfo;
+                    console.log(containerInfo)
+                }
+
+            }
+            
+            fs.writeFileSync('../utilities/Containers.json', JSON.stringify(containersJson),'utf8', function (err) {
+                if (err) console.log(err);
+                console.log('File is created successfully.');
+            });
+
+            process.exit(0);
+        
+        });
+
 }
 
 setUP();
