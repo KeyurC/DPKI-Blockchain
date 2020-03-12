@@ -1,5 +1,8 @@
 const utils = require('../utilities/IBMUtils.js');
 const { config } = require('../utilities/config.js');
+const forge = require('node-forge');
+const hash = require('object-hash');
+const fs = require('fs');
 
 /**
  * Class is responsible for communicating with the blockchain,
@@ -21,7 +24,24 @@ class ClientRequestHandler {
         const orgC = this.constructOrgClient();
         await orgC.login();
         await orgC.getOrgAdmin();
-        await orgC.transaction(config.Org1.chaincode.chaincodeId, config.Org1.chaincode.dchaincodeVersion, 'invoke', this.domain, this.request);
+        let hashedSubject = this.generateHashOfCSR();
+        let peer = await this.SelectPeer();
+        await orgC.transaction(config.Org1.chaincode.chaincodeId, config.Org1.chaincode.dchaincodeVersion, 'invoke', peer, this.request, hashedSubject);
+
+    }
+
+    async SelectPeer() {
+        let peers = await new Promise((resolve, reject) => {
+            fs.readFile('../utilities/Containers.json', 'utf8', function (err, data) {
+                if (err) {
+                    reject(err);
+                }
+                resolve(data);
+            });
+        });
+
+        let peerList = JSON.parse(peers); 
+        return peerList["Container1"].ID;
 
     }
 
@@ -34,6 +54,13 @@ class ClientRequestHandler {
             config.Org1.peer, config.Org1.ca, config.Org1.admin);
         return chaincode1;
     }
-}
 
+    generateHashOfCSR() {
+        let CSR = forge.pki.certificationRequestFromPem(this.request);
+        let subject = CSR.subject.attributes;
+        let hasedSubject = hash(subject);
+        console.log(hasedSubject);
+        return hasedSubject;
+    }
+}
 module.exports = { ClientRequestHandler }
