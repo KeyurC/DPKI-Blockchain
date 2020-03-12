@@ -251,53 +251,81 @@ class OrganizationClient extends EventEmitter {
     return allGood;
   }
 
-  async instantiate(chaincodeId, chaincodeVersion, ...args) {
+  async instantiate(version, chaincodeId, chaincodeVersion, ...args) {
     let proposalResponses, proposal;
     const txId = this._client.newTransactionID();
 
     let endosementpolicy = {
       "identities": [
-          {
-              "role": {
-                  "name": "member",
-                  "mspId": "Org1MSP"
-              }
+        {
+          "role": {
+            "name": "member",
+            "mspId": "Org1MSP"
           }
+        }
       ],
       "policy": {
-          "2-of": [
-              {
-                  "signed-by": 0
-              },
-              {
-                  "signed-by": 0
-              },
-          ]
+        "2-of": [
+          {
+            "signed-by": 0
+          },
+          {
+            "signed-by": 0
+          },
+        ]
       }
-  };
+    };
 
-    try {
-      const request = {
-        chaincodeType: 'node',
-        chaincodeId,
-        chaincodeVersion,
-        fcn: 'init',
-        args: marshalArgs(args),
-        txId
-      };
-      const results = await this._channel.sendInstantiateProposal(request);
-      proposalResponses = results[0];
-      proposal = results[1];
 
-      let allGood = proposalResponses
-        .every(pr => pr.response && pr.response.status == 200);
+    if (version == 'org1') {
+      try {
+        const request = {
+          chaincodeType: 'node',
+          chaincodeId,
+          chaincodeVersion,
+          'endorsement-policy': endosementpolicy,
+          fcn: 'init',
+          args: marshalArgs(args),
+          txId
+        };
+        const results = await this._channel.sendInstantiateProposal(request);
+        proposalResponses = results[0];
+        proposal = results[1];
 
-      if (!allGood) {
-        throw new Error(
-          `Proposal rejected by some (all) of the peers: ${proposalResponses}`);
+        let allGood = proposalResponses
+          .every(pr => pr.response && pr.response.status == 200);
+
+        if (!allGood) {
+          throw new Error(
+            `Proposal rejected by some (all) of the peers: ${proposalResponses}`);
+        }
+      } catch (e) {
+        throw e;
       }
-    } catch (e) {
-      throw e;
+    } else {
+      try {
+        const request = {
+          chaincodeType: 'node',
+          chaincodeId,
+          chaincodeVersion,
+          fcn: 'init',
+          args: marshalArgs(args),
+          txId
+        };
+        const results = await this._channel.sendInstantiateProposal(request);
+        proposalResponses = results[0];
+        proposal = results[1];
+
+        let allGood = proposalResponses
+          .every(pr => pr.response && pr.response.status == 200);
+
+        if (!allGood) {
+          throw new Error(
+            `Proposal rejected by some (all) of the peers: ${proposalResponses}`);
+        }
+      } catch (e) {
+        throw e;
+      }
     }
 
     try {
@@ -383,7 +411,13 @@ class OrganizationClient extends EventEmitter {
       txId: this._client.newTransactionID(),
     };
     let responsePayloads = await this._channel.queryByChaincode(request);
-    return unmarshalResult(responsePayloads[0].toString());
+    let keys = Object.keys(responsePayloads);
+    for (keys in responsePayloads) {
+      let payload = responsePayloads[keys].toString();
+      if (payload.length > 40) {
+        return unmarshalResult(responsePayloads[keys].toString());
+      }
+    }
   }
 
   async getBlocks(noOfLastBlocks) {
