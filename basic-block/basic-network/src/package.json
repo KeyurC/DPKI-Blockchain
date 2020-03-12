@@ -19,7 +19,12 @@
         "fabric-ca-client": "~1.4.0",
         "fabric-network": "~1.4.0",
         "json-style-converter": "^1.0.3",
+        "mysql": "^2.18.1",
+        "node-docker-api": "^1.1.22",
         "node-forge": "^0.9.1",
+        "object-hash": "^2.0.3",
+        "os": "^0.1.1",
+        "pgtools": "^0.3.0",
         "readline-sync": "^1.4.10"
     },
     "devDependencies": {
