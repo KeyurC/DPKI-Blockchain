@@ -39,7 +39,7 @@ const config = {
     },
     chaincode: {
       chaincodeId: 'abstore',
-      chaincodeVersion: 'v2',
+      chaincodeVersion: 'v3',
       chaincodePath: '../chaincode/certchain/javascript/'
     },
     peer: {
@@ -47,6 +47,12 @@ const config = {
         hostname: 'peer0.org1.example.com',
         url: 'grpc://localhost:7051',
         eventHubUrl: 'grpc://localhost:7053',
+        // pem: readFileSync(path.resolve(__dirname,'basic-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt')).toString()
+      },
+      peer1: {
+        hostname: 'peer1.org1.example.com',
+        url: 'grpc://localhost:9051',
+        eventHubUrl: 'grpc://localhost:9053',
         // pem: readFileSync(path.resolve(__dirname,'basic-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt')).toString()
       }
     },
@@ -57,7 +63,7 @@ const config = {
     },
     admin: {
       cert: readFileSync(path.resolve(__dirname, '../basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/admincerts/Admin@org1.example.com-cert.pem')),
-      key: readFileSync(path.resolve(__dirname, '../basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/4929cb1245650670c1b7a4018a8a5c37c8cdaf62084d612fe0df432098602901_sk'))
+      key: readFileSync(path.resolve(__dirname, '../basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/8b5734a38bc5545a0ffd79fddad44dd2832396b2f8fdb50f8d21f045125e0370_sk'))
     }
   },
 
@@ -106,7 +112,7 @@ const config = {
     },
     admin: {
       cert: readFileSync(path.resolve(__dirname, '../basic-network/crypto-config/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/admincerts/Admin@org2.example.com-cert.pem')),
-      key: readFileSync(path.resolve(__dirname, '../basic-network/crypto-config/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/keystore/e1f979bfea9c93d87954112f27b7e36ea4590d9edbb36d7d1d0b99825ae78023_sk'))
+      key: readFileSync(path.resolve(__dirname, '../basic-network/crypto-config/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/keystore/8bc29a28c4d4efc1b2837f64e1d6518070cfeb6387d70df8702aa9ad53685519_sk'))
     }
   }
 };
