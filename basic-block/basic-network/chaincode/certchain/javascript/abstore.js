@@ -4,9 +4,16 @@
 # SPDX-License-Identifier: Apache-2.0
 */
 
+const fs = require('fs');
 const shim = require('fabric-shim');
+const crypto = require('crypto');
 const forge = require('node-forge');
+const hash = require('object-hash');
+const os = require('os');
+const hostname = os.hostname[Symbol.toPrimitive]("String");
+
 const CADomain = "SubCA";
+const databaseTemplate = '[]';
 
 var ABstore = class {
 
@@ -17,16 +24,65 @@ var ABstore = class {
     let CAList = args[0];
     let CN = args[1];
     let tmpList = JSON.parse(CAList);
-    console.log(tmpList[1]);
-    try {
-      for (let i = 0; i < tmpList.length - 1; i++) {
-        let cn = "SubCA" + i;
-        console.log(tmpList[i]);
-        let tmp = JSON.stringify(tmpList[i]);
-        await stub.putState(cn, Buffer.from(tmp));
-      }
+    let hostname = os.hostname;
 
-      await stub.putState(CN, Buffer.from(JSON.stringify(tmpList[tmpList.length - 1])));
+    let keys = forge.pki.rsa.generateKeyPair(1024);
+    let privateKey = forge.pki.privateKeyToPem(keys.privateKey);
+    let publicKey = forge.pki.publicKeyToPem(keys.publicKey);
+
+    fs.writeFile('database.json', databaseTemplate, function (err) {
+      if (err) throw err;
+      console.log('Database is created successfully.');
+    });
+
+    fs.writeFile('public.pem', publicKey, function (err) {
+      if (err) throw err;
+      console.log('Public Key File has bean created.');
+    });
+
+    fs.writeFile('private.pem', privateKey, function (err) {
+      if (err) throw err;
+      console.log('Private Key File has been created.');
+    });
+
+    let certificate = forge.pki.certificateFromPem(tmpList[1].certificate);
+    let pk = forge.pki.privateKeyFromPem(tmpList[1].private_key);
+
+
+    let cert = forge.pki.createCertificate();
+    cert.publicKey = certificate.publicKey;
+    cert.validity.notBefore = new Date();
+    cert.validity.notAfter = new Date();
+    cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1);
+    cert.setSubject([{
+      name: 'commonName',
+      value: hostname
+    }, {
+      name: 'countryName',
+      value: 'UK'
+    }, {
+      shortName: 'ST',
+      value: 'MS'
+    }, {
+      name: 'organizationName',
+      value: 'PKI'
+    }, {
+      shortName: 'OU',
+      value: 'PKI-Blockchain'
+    }]);
+
+    cert.setIssuer(certificate.subject.attributes);
+    cert.sign(pk);
+
+    let pemFormatCert = forge.pki.certificateToPem(cert);
+
+
+    fs.writeFile('certificate.pem', pemFormatCert, function (err) {
+      if (err) throw err;
+      console.log('certificate has been created.');
+    });
+
+    try {
       return shim.success();
     } catch (err) {
       return shim.error(err);
@@ -77,53 +133,79 @@ var ABstore = class {
   }
 
   async invoke(stub, args) {
-    let CN = args[0];
+    let peer = args[0];
     let certreq;
+    let hashed = args[2];
     try {
       certreq = forge.pki.certificationRequestFromPem(args[1])
     } catch (error) {
       console.error("Failed to obtain/convert CSR" + error)
     }
-    let randomInt = Math.floor(Math.random() * 3);
-    let chosenCA = CADomain.concat('', randomInt);
-    console.log(chosenCA);
-    let test = await stub.getState(chosenCA);
-    console.log("TEST HERE " + test);
+    if (peer == hostname) {
+      let privateKey = await new Promise((resolve, reject) => {
+        fs.readFile('private.pem', 'utf8', function (err, data) {
+          if (err) {
+            reject(err);
+          }
+          resolve(data);
+        });
+      });
 
-    let pem = JSON.parse(test);
+      let certificate = await new Promise((resolve, reject) => {
+        fs.readFile('certificate.pem', 'utf8', function (err, data) {
+          if (err) {
+            reject(err);
+          }
+          resolve(data);
+        });
+      });
 
-    let privateKey = forge.pki.privateKeyFromPem(pem.private_key);
-    let rootCA = forge.pki.certificateFromPem(pem.certificate);
-    let serial = pem.serial;
-    let value = serial.substring(2, serial.length);
-    let serialNo = parseInt(value) + 1;
-    let defaultPadding = "0000";
-    let padding = value.length - serialNo.toString().length
-    let serialP2 = defaultPadding.substring(0, padding-1) + serialNo;
-    let newSerial = serial.substring(0,2) + serialP2;
+      let signCert = forge.pki.certificateFromPem(certificate);
 
-    let CA = {
-      certificate: pem.certificate,
-      private_key: pem.private_key,
-      serial: newSerial
+      let pk = forge.pki.privateKeyFromPem(privateKey);
+      let cert = forge.pki.createCertificate();
+      cert.publicKey = certreq.publicKey;
+      cert.validity.notBefore = new Date();
+      cert.validity.notAfter = new Date();
+      cert.serialNumber = Buffer(hashed).toString('hex');
+      cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1);
+      cert.setSubject(certreq.subject.attributes);
+      cert.setIssuer(signCert.subject.attributes);
+      cert.sign(pk);
+
+      let database = await new Promise((resolve, reject) => {
+        fs.readFile('database.json', 'utf8', function (err, data) {
+          if (err) {
+            reject(err);
+          }
+          resolve(data);
+        });
+      });
+
+      let insert = '{"SerialNo":"' + hashed + '","Certificate":"' + forge.pki.certificateToPem(cert).replace(/\n|\r/g, '') + '"}';
+
+      let currentData = database.substring(0, database.length - 1);
+      let newEntry = insert;
+      let updated;
+
+      if (databaseTemplate.length === database.length) {
+        updated = currentData + newEntry + ']';
+      } else {
+        updated = currentData + ',' + newEntry + ']';
+      }
+
+      console.log(hostname);
+      console.log(peer);
+
+
+      fs.writeFile('database.json', updated, function (err) {
+        if (err) throw err;
+        console.log('File is created successfully.');
+      });
     }
 
-    await stub.putState(chosenCA,Buffer.from(JSON.stringify(CA)));
-
-    let cert = forge.pki.createCertificate();
-    cert.publicKey = certreq.publicKey;
-    cert.validity.notBefore = new Date();
-    cert.validity.notAfter = new Date();
-    cert.serialNumber = Buffer(serial).toString('hex');
-    cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1);
-    cert.setSubject(certreq.subject.attributes);
-    cert.setIssuer(rootCA.subject.attributes);
-    cert.sign(privateKey);
-    console.log(forge.pki.certificateToPem(cert));
-    
-    await stub.putState(CN, Buffer.from(forge.pki.certificateToPem(cert)));
+    await stub.putState(certreq.subject.attributes[0].value.toString(), Buffer.from(hashed));
   }
-
 
   async verify(stub, args) {
     let rootObj = JSON.parse(await stub.getState("ROOTCA"));
@@ -167,20 +249,45 @@ var ABstore = class {
 
     // Prevents any private keys being retrieved outside the blockchain
 
-    let privatekey;
+    // let privatekey;
 
-    try {
-      privatekey = JSON.parse(Avalbytes).private_key;
-    } catch(e) {
-      console.log("Not a intermediate CA" + e);
-    }
-    if (typeof privatekey != 'undefined') {
-      Avalbytes = Buffer.from(JSON.parse(Avalbytes).certificate);
-    }
+    // try {
+    //   privatekey = JSON.parse(Avalbytes).private_key;
+    // } catch (e) {
+    //   console.log("Not a intermediate CA" + e);
+    // }
+    // if (typeof privatekey != 'undefined') {
+    //   Avalbytes = Buffer.from(JSON.parse(Avalbytes).certificate);
+    // }
 
     if (!Avalbytes) {
       jsonResp.error = 'Failed to get state for ' + A;
       throw new Error(JSON.stringify(jsonResp));
+    }
+
+    let database = await new Promise((resolve, reject) => {
+      fs.readFile('database.json', 'utf8', function (err, data) {
+        if (err) {
+          reject(err);
+        }
+        resolve(data);
+      });
+    });
+
+
+    let db = JSON.parse(database);
+    console.log("DB", db)
+    let keys = Object.keys(db);
+    console.log("keys", keys)
+    for (keys in db) {
+      let payload = Avalbytes;
+      console.log("AVAL", payload)
+      let serial = db[keys].SerialNo;
+      console.log("TEST", db[0])
+      // console.log("NEW TEST",serial);
+      if (serial == payload) {
+        return Buffer.from(db[keys].Certificate);
+      }
     }
 
     jsonResp.name = A;
