@@ -54,7 +54,9 @@ class OrganizationClient extends EventEmitter {
       if (peerConfig.hasOwnProperty(key)) {
         let tmp = JSON.stringify(peerConfig[key]);
         let obj = JSON.parse(tmp);
+        // console.log(obj);
         const peer = this._client.newPeer(obj.url, {
+          pem: obj.pem,
           name: obj.hostname,
           'ssl-target-name-override': obj.hostname
         });

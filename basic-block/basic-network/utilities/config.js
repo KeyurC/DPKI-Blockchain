@@ -10,7 +10,8 @@ const config = {
   isCloud: false,
   orderer0: {
     hostname: 'orderer.example.com',
-    url: 'grpc://localhost:7050'
+    url: 'grpcs://localhost:7050',
+    pem : readFileSync(path.resolve(__dirname,'../','basic-network/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/ca.crt')).toString()
   },
   Org1: {
     // endorsementpolicy = {
@@ -45,20 +46,20 @@ const config = {
     peer: {
       peer0: {
         hostname: 'peer0.org1.example.com',
-        url: 'grpc://localhost:7051',
+        url: 'grpcs://localhost:7051',
         eventHubUrl: 'grpc://localhost:7053',
-        // pem: readFileSync(path.resolve(__dirname,'basic-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt')).toString()
+        pem: readFileSync(path.resolve(__dirname,'../basic-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt')).toString()
       },
       peer1: {
         hostname: 'peer1.org1.example.com',
-        url: 'grpc://localhost:9051',
+        url: 'grpcs://localhost:9051',
         eventHubUrl: 'grpc://localhost:9053',
-        // pem: readFileSync(path.resolve(__dirname,'basic-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt')).toString()
+        pem: readFileSync(path.resolve(__dirname,'../basic-network/crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls/ca.crt')).toString()
       }
     },
     ca: {
       hostname: 'ca0.example.com',
-      url: 'http://localhost:7054',
+      url: 'https://localhost:7054',
       mspId: 'Org1MSP'
     },
     admin: {
@@ -100,14 +101,14 @@ const config = {
     peer: {
       peer0: {
         hostname: 'peer0.org2.example.com',
-        url: 'grpc://localhost:8051',
+        url: 'grpcs://localhost:8051',
         eventHubUrl: 'grpc://localhost:8053',
-        // pem: readFileSync(path.resolve(__dirname,'basic-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt')).toString()
+        pem: readFileSync(path.resolve(__dirname,'../basic-network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt')).toString()
       }
     },
     ca: {
       hostname: 'ca1.example.com',
-      url: 'http://localhost:8054',
+      url: 'https://localhost:8054',
       mspId: 'Org2MSP'
     },
     admin: {
