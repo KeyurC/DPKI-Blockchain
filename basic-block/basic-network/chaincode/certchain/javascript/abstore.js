@@ -6,13 +6,10 @@
 
 const fs = require('fs');
 const shim = require('fabric-shim');
-const crypto = require('crypto');
 const forge = require('node-forge');
-const hash = require('object-hash');
 const os = require('os');
 const hostname = os.hostname[Symbol.toPrimitive]("String");
 
-const CADomain = "SubCA";
 const databaseTemplate = '[]';
 
 var ABstore = class {
@@ -88,29 +85,6 @@ var ABstore = class {
       return shim.error(err);
     }
 
-  }
-  /**
-   * 
-   * @param {Certificate and Private Key list to parse and separate} value 
-   */
-  parse(value) {
-    let CAList = [];
-    for (let i = 1; CAList.length < 4; i++) {
-      if (value[i] == '{') {
-        let starttmp = i;
-        let found = false;
-        let end = 0;
-        for (let x = i + 1; found == false; x++) {
-          if (value[x] == '}') {
-            end = x + 1;
-            found = true;
-          }
-        }
-        let tmp = value.substring(starttmp, end);
-        CAList.push(tmp);
-      }
-    }
-    return CAList;
   }
 
   async Invoke(stub) {
@@ -244,21 +218,7 @@ var ABstore = class {
     let jsonResp = {};
     let A = args[0];
 
-    // Get the state from the ledger
     let Avalbytes = await stub.getState(A);
-
-    // Prevents any private keys being retrieved outside the blockchain
-
-    // let privatekey;
-
-    // try {
-    //   privatekey = JSON.parse(Avalbytes).private_key;
-    // } catch (e) {
-    //   console.log("Not a intermediate CA" + e);
-    // }
-    // if (typeof privatekey != 'undefined') {
-    //   Avalbytes = Buffer.from(JSON.parse(Avalbytes).certificate);
-    // }
 
     if (!Avalbytes) {
       jsonResp.error = 'Failed to get state for ' + A;
@@ -274,17 +234,12 @@ var ABstore = class {
       });
     });
 
-
     let db = JSON.parse(database);
-    console.log("DB", db)
     let keys = Object.keys(db);
-    console.log("keys", keys)
+
     for (keys in db) {
       let payload = Avalbytes;
-      console.log("AVAL", payload)
       let serial = db[keys].SerialNo;
-      console.log("TEST", db[0])
-      // console.log("NEW TEST",serial);
       if (serial == payload) {
         return Buffer.from(db[keys].Certificate);
       }
