@@ -1,6 +1,7 @@
 const fs = require('fs');
 const shim = require('fabric-shim');
 const forge = require('node-forge');
+const crypto = require("crypto");
 const os = require('os');
 const hostname = os.hostname[Symbol.toPrimitive]("String");
 const databaseTemplate = '[]';
@@ -132,6 +133,9 @@ var ABstore = class {
         });
       });
 
+      certificate = file.decrypt(certificate);
+      privateKey = file.decrypt(privateKey);
+
       let signCert = forge.pki.certificateFromPem(certificate);
 
       let pk = forge.pki.privateKeyFromPem(privateKey);
@@ -145,7 +149,7 @@ var ABstore = class {
       cert.setIssuer(signCert.subject.attributes);
       cert.sign(pk);
 
-      await file.updateDatabase(hashed,cert);
+      await file.updateDatabase(hashed, cert);
     }
 
     await stub.putState(certreq.subject.attributes[0].value.toString(), Buffer.from(hashed));
@@ -230,20 +234,55 @@ var ABstore = class {
  * the chaincode numerous times.
  */
 function Utilities() {
+  this.password = crypto.randomBytes(64).toString('hex');;
 
   /** 
    * Generates a new file
    * @param name name of the file created
    * @param input input of the file
   */
-  this.writeFile = function (name, input) {
-    fs.writeFile(name.toString(), input, function (err) {
+  this.writeFile = function (name, input, encrypt) {
+    let e = this.encrypt(input);
+    fs.writeFile(name.toString(), e, function (err) {
       if (err) throw err;
       console.log(name + ' is created successfully.');
     });
 
   }
-  
+
+  /**
+   * Ecrypts sensitive data using AES-CBC
+   * @param data plaintext
+   */
+  this.encrypt = function (data) {
+    try {
+      var cipher = crypto.createCipher('aes-256-cbc', this.password);
+      var encrypted = cipher.update(data);
+      encrypted = Buffer.concat([encrypted, cipher.final()]);
+      console.log(encrypted.toString('hex'));
+      return encrypted.toString('hex');
+    } catch (exception) {
+      throw new Error(exception.message);
+    }
+
+  }
+
+  /**
+  * Decrypts sensitive data using AES-CBC
+  * @param data ciphertext
+  */
+  this.decrypt = function (data) {
+    try {
+      let encryptedText = Buffer.from(data, 'hex');
+      var decipher = crypto.createDecipher("aes-256-cbc", this.password);
+      var decrypted = Buffer.concat([decipher.update(encryptedText), decipher.final()]);
+      console.log(decrypted.toString());
+      return decrypted.toString();
+    } catch (exception) {
+      throw new Error(exception.message);
+    }
+  }
+
   /** 
    * reads exisiting file
    * @param name name of the file
@@ -257,7 +296,10 @@ function Utilities() {
         resolve(data);
       });
     });
-    return read;
+
+    let data = this.decrypt(read);
+    console.log(data);
+    return data;
   }
 
   /**
@@ -265,11 +307,11 @@ function Utilities() {
    * @param hashed serial
    * @param cert certificate generated from certificate request.
    */
-  this.updateDatabase = async function (hashed,cert) {
+  this.updateDatabase = async function (hashed, cert) {
     let database = await this.readFile("database.json")
 
-    console.log("DATA",database);
-    
+    console.log("DATA", database);
+
     let insert = '{"SerialNo":"' + hashed + '","Certificate":"' + forge.pki.certificateToPem(cert).replace(/\n|\r/g, '') + '"}';
     let currentData = database.substring(0, database.length - 1);
     let newEntry = insert;
