@@ -15,3 +15,6 @@ wait
 echo 'Blockchain has started'
 echo 'Currently started docker instances'
 docker ps
+sleep 2
+echo 'Setting up Network'
+node ../src/MultiOrgSetUp.js
