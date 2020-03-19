@@ -51,7 +51,7 @@ class OrganizationClient extends EventEmitter {
     this._channel.addOrderer(orderer);
 
     for (let key in peerConfig) {
-      if (peerConfig.hasOwnProperty(key)) {
+      if (peerConfig.hasOwnProperty(key) && key.substr(0,4) == 'peer') {
         let tmp = JSON.stringify(peerConfig[key]);
         let obj = JSON.parse(tmp);
         // console.log(obj);
@@ -379,7 +379,10 @@ class OrganizationClient extends EventEmitter {
       const results = await this._channel.sendTransactionProposal(request);
       proposalResponses = results[0];
       proposal = results[1];
-
+      let tmp = proposalResponses[1].payload.toString();
+      if (tmp.includes("Please generate a page with the correct name and context")) {
+        console.log("Generate");
+      }
       const allGood = proposalResponses
         .every(pr => pr.response && pr.response.status == 200);
 
