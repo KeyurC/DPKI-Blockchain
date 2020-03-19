@@ -2,6 +2,8 @@ const shim = require('fabric-shim');
 const fs = require('fs');
 let template = "[]";
 
+const file = new Utilities();
+
 /**
  * The class handles the certificate revocation aspect
  * of the PKI system.
@@ -24,7 +26,6 @@ var Revocation = class {
 
   async Invoke(stub) {
     let ret = stub.getFunctionAndParameters();
-    console.info(ret);
     let method = this[ret.fcn];
     if (!method) {
       console.log('no method of name:' + ret.fcn + ' found');
@@ -34,7 +35,6 @@ var Revocation = class {
       let payload = await method(stub, ret.params);
       return shim.success(payload);
     } catch (err) {
-      console.log(err);
       return shim.error(err);
     }
   }
@@ -51,40 +51,34 @@ var Revocation = class {
     let serial = args[1];
     let reason = args[2];
 
-    let database = await new Promise((resolve, reject) => {
-      fs.readFile("keys", 'utf8', function (err, data) {
-        if (err) {
-          reject(err);
-        }
-        resolve(data);
-      });
-    });
+    try {
+      let database = await file.readFile("keys");
+      let insert = '"' + CN + '"';
+      let currentData = database.substring(0, database.length - 1);
+      let newEntry = insert;
+      let updated;
 
-    let insert = '"' + CN + '"';
-    let currentData = database.substring(0, database.length - 1);
-    let newEntry = insert;
-    let updated;
+      if (template.length === database.length) {
+        updated = currentData + newEntry + ']';
+      } else {
+        updated = currentData + ',' + newEntry + ']';
+      }
 
-    if (template.length === database.length) {
-      updated = currentData + newEntry + ']';
-    } else {
-      updated = currentData + ',' + newEntry + ']';
+      let certificateRevocation = {
+        serial: serial,
+        date: date,
+        reason: reason
+      }
+
+      file.writeFile("keys", updated);
+      await stub.putState(CN, Buffer.from(JSON.stringify(certificateRevocation)));
+
+    } catch (err) {
+      console.log(err);
+      Buffer.from("Failed to add revoked certificate");
     }
 
-    console.log(updated);
 
-    let certificateRevocation = {
-      serial: serial,
-      date: date,
-      reason: reason
-    }
-
-    fs.writeFile("keys", updated, function (err) {
-      if (err) throw err;
-      console.log('database is created successfully.');
-    });
-
-    await stub.putState(CN, Buffer.from(JSON.stringify(certificateRevocation)));
   }
 
   /**
@@ -94,41 +88,34 @@ var Revocation = class {
    * @param {*} args 
    */
   async getAllRevokedCertificates(stub, args) {
+    let list = [];
     let filter = args[0];
 
-    let keys = await new Promise((resolve, reject) => {
-      fs.readFile("keys", 'utf8', function (err, data) {
-        if (err) {
-          reject(err);
-        }
-        resolve(data);
-      });
-    });
+    try {
+      let keys = await file.readFile("keys");
+      let db = JSON.parse(keys);
+      for (let i = 0; i < db.length; i++) {
+        let tmp = await stub.getState(db[i]);
+        let revoke = JSON.parse(tmp.toString());
+        let tmpList = {
+          domain: db[i],
+          reocation: tmp.toString()
+        };
 
-    let db = JSON.parse(keys);
-
-    let list = [];
-
-    for (let i = 0; i < db.length; i++) {
-      console.log(db[i]);
-      let tmp = await stub.getState(db[i]);
-      let revoke = JSON.parse(tmp.toString());
-      let tmpList = {
-        domain: db[i],
-        reocation: tmp.toString()
-      };
-
-      if (typeof filter != 'undefined') {
-        if (revoke.reason == filter) {
+        if (typeof filter != 'undefined') {
+          if (revoke.reason == filter) {
+            list.push(tmpList);
+          }
+        } else {
           list.push(tmpList);
         }
-      } else {
-        list.push(tmpList);
       }
+      return Buffer.from(JSON.stringify(list));
+
+    } catch (err) {
+      console.log(err);
+      Buffer.from("Failed to get all Revoked Certificates");
     }
-
-    return Buffer.from(JSON.stringify(list));
-
   }
 
   /**
@@ -156,5 +143,30 @@ var Revocation = class {
     return Avalbytes;
   }
 };
+
+function Utilities() {
+
+  this.writeFile = function (name, input) {
+    fs.writeFile(name.toString(), input, function (err) {
+      if (err) throw err;
+      console.log(name + ' is created successfully.');
+    });
+
+  }
+
+  this.readFile = async function (name) {
+    let read = await new Promise((resolve, reject) => {
+      fs.readFile(name, 'utf8', function (err, data) {
+        if (err) {
+          reject(err);
+        }
+        resolve(data);
+      });
+    });
+
+    return read;
+  }
+
+}
 
 shim.start(new Revocation());
