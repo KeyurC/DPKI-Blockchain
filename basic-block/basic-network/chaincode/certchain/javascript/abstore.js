@@ -5,9 +5,11 @@ const crypto = require("crypto");
 const os = require('os');
 const request = require("request-promise");
 
-const hostname = os.hostname[Symbol.toPrimitive]("String");
-const databaseTemplate = '[]';
+const ra = new RegistrationAuthority();
+const ca = new CertificateAuthority();
 const file = new Utilities();
+const databaseTemplate = '[]';
+const hostname = os.hostname[Symbol.toPrimitive]("String");
 
 var ABstore = class {
 
@@ -77,9 +79,6 @@ var ABstore = class {
 
   }
 
-  /**
-   * 
-   */
   async Invoke(stub) {
     let ret = stub.getFunctionAndParameters();
     let method = this[ret.fcn];
@@ -109,91 +108,33 @@ var ABstore = class {
     let peer = args[0];
     let hashed = args[2];
 
-    let RAResponse = await file.validateEntity(hashed);
-
-    let certreq;
     try {
-      certreq = forge.pki.certificationRequestFromPem(args[1])
-    } catch (error) {
-      console.error("Failed to obtain/convert CSR" + error)
+      let certreq = forge.pki.certificationRequestFromPem(args[1])
+      let domain = certreq.subject.attributes[0].value.toString();
+
+      ra.setValues(domain, hashed);
+      let RAResponse = await ra.validateCSR();
+
+      if (!RAResponse) {
+        return Buffer.from("Please generate a page with the correct name and context");
+      }
+
+      if (peer == hostname) {
+        let privateKey = await file.readFile('private.pem');
+        let certificate = await file.readFile('certificate.pem')
+
+        ca.setAllValues(domain, certreq, hashed, privateKey, certificate);
+        let cert = ca.sign();
+
+        console.log(forge.pki.certificateToPem(cert))
+        await file.updateDatabase(hashed, cert);
+      }
+      await stub.putState(certreq.subject.attributes[0].value.toString(), Buffer.from(hashed));
+    } catch (err) {
+      console.log(err);
+      return Buffer.from("Unable to complete transaction for certificate generation");
     }
-
-    console.log("RESPONSE" + RAResponse);
-
-    if (!RAResponse) {
-      console.log("nope")
-      return Buffer.from("Please generate a page with the correct name and context");
-    }
-
-    if (peer == hostname) {
-      let privateKey = await new Promise((resolve, reject) => {
-        fs.readFile('private.pem', 'utf8', function (err, data) {
-          if (err) {
-            reject(err);
-          }
-          resolve(data);
-        });
-      });
-
-      let certificate = await new Promise((resolve, reject) => {
-        fs.readFile('certificate.pem', 'utf8', function (err, data) {
-          if (err) {
-            reject(err);
-          }
-          resolve(data);
-        });
-      });
-
-      certificate = file.decrypt(certificate);
-      privateKey = file.decrypt(privateKey);
-
-      let signCert = forge.pki.certificateFromPem(certificate);
-
-      let pk = forge.pki.privateKeyFromPem(privateKey);
-      let cert = forge.pki.createCertificate();
-      cert.publicKey = certreq.publicKey;
-      cert.validity.notBefore = new Date();
-      cert.validity.notAfter = new Date();
-      cert.serialNumber = Buffer(hashed).toString('hex');
-      cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1);
-      cert.setSubject(certreq.subject.attributes);
-      cert.setIssuer(signCert.subject.attributes);
-      cert.sign(pk);
-
-      console.log(forge.pki.certificateToPem(cert))
-      await file.updateDatabase(hashed, cert);
-    }
-
-    await stub.putState(certreq.subject.attributes[0].value.toString(), Buffer.from(hashed));
   }
-
-  // async verify(stub, args) {
-  //   let rootObj = JSON.parse(await stub.getState("ROOTCA"));
-  //   let rootcert = forge.pki.certificateFromPem(rootObj.certificate);
-
-  //   let cert = forge.pki.certificateFromPem(args[0]);
-
-  //   let issuer = cert.issuer.attributes[0].value;
-  //   let issuerObj = null;
-  //   try {
-  //     issuerObj = JSON.parse(await stub.getState(issuer));
-  //   } catch (err) {
-  //     console.log("Issuer does not exist or JSON Parsing fault");
-  //     return Buffer.from("Certificate does not belong to us");
-  //   }
-
-  //   let issuerCert = forge.pki.certificateFromPem(issuerObj.certificate);
-
-  //   let certVerified = issuerCert.verify(cert);
-  //   if (certVerified) {
-  //     if (!rootcert.verify(issuerCert)) {
-  //       return Buffer.from("Certificate does not belong to us");
-  //     }
-  //   } else {
-  //     return Buffer.from("Certificate does not belong to us");
-  //   }
-  //   return Buffer.from("Certificate belongs to us");
-  // }
 
   /**
    * Function uses the serial retrieved from the chaincode as a key
@@ -241,32 +182,109 @@ var ABstore = class {
 
 };
 
+
+function CertificateAuthority() {
+
+  this.setDomain = function (domain) {
+    this.domain = domain;
+  }
+
+  this.setRequest = function (CSR) {
+    this.request = CSR;
+  }
+
+  this.setHash = function (hash) {
+    this.hash = hash;
+  }
+
+  this.setPrivateKey = function (privateKey) {
+    this.privateKey = forge.pki.privateKeyFromPem(privateKey);
+  }
+
+  this.setSigningCert = function (certificate) {
+    this.signCert = forge.pki.certificateFromPem(certificate);
+  }
+
+  this.setAllValues = function (domain, CSR, hash, privateKey, certificate) {
+    this.setDomain(domain);
+    this.setRequest(CSR);
+    this.setHash(hash);
+    this.setPrivateKey(privateKey);
+    this.setSigningCert(certificate);
+  }
+
+  this.sign = function () {
+    let cert = forge.pki.createCertificate();
+    cert.publicKey = this.request.publicKey;
+    cert.validity.notBefore = new Date();
+    cert.validity.notAfter = new Date();
+    cert.serialNumber = Buffer(this.hash).toString('hex');
+    cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1);
+    cert.setSubject(this.request.subject.attributes);
+    cert.setIssuer(this.signCert.subject.attributes);
+    cert.sign(this.privateKey);
+
+    return cert;
+  }
+
+
+}
+
+function RegistrationAuthority() {
+  this.divider = 4;
+
+  this.setDomain = function (domain) {
+    let tag = domain.substr(domain.length - 1, domain.length);
+    if (tag == '/') {
+      return domain;
+    } else {
+      return domain + "/";
+    }
+  };
+
+  this.setHash = function (domain) {
+    return objectHash(domain);
+  }
+
+  this.setValues = function (domain, hash) {
+    this.hash = hash;
+    this.domain = this.setDomain(domain);
+  }
+
+  this.getPage = function () {
+    return this.hash.substr(0, this.divider);
+  }
+
+  this.getSecret = function () {
+    return this.hash.substr(this.divider, this.hash.length);
+  }
+
+  this.validateCSR = async function () {
+    let validated = false;
+    let secret = this.getSecret();
+    let page = this.getPage()
+    await request({
+      uri: this.domain + page + ".html",
+    }, function (err, response, body) {
+      let content = (typeof body != 'undefined') ? body.toString() : "";
+      validated = (content.includes(secret)) ? true : false;
+    }).catch(err => {
+      validated = false;
+    })
+
+    return validated;
+
+  }
+
+}
+
+
 /**
  * The class contains basic functions used by 
  * the chaincode numerous times.
  */
 function Utilities() {
   this.password = crypto.randomBytes(64).toString('hex');;
-
-  this.validateEntity =  async function (hash) {
-    let confirm;
-    let page = hash.substr(0, 4);
-
-    await request({
-      uri: "https://keyurc.github.io/" + page + ".html",
-    }, function (error, response, body) {
-      let html = body;
-      if (html.toString().includes(hash.substr(4, hash.length))) {
-        confirm = true;
-      } else {
-        confirm = false;
-      }
-    }).catch(er => {
-      confirm = false;
-    })
-
-    return confirm;
-  }
 
   /** 
    * Generates a new file
