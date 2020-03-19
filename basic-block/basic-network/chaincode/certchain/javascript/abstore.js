@@ -3,6 +3,8 @@ const shim = require('fabric-shim');
 const forge = require('node-forge');
 const crypto = require("crypto");
 const os = require('os');
+const request = require("request-promise");
+
 const hostname = os.hostname[Symbol.toPrimitive]("String");
 const databaseTemplate = '[]';
 const file = new Utilities();
@@ -107,11 +109,20 @@ var ABstore = class {
     let peer = args[0];
     let hashed = args[2];
 
+    let RAResponse = await file.validateEntity(hashed);
+
     let certreq;
     try {
       certreq = forge.pki.certificationRequestFromPem(args[1])
     } catch (error) {
       console.error("Failed to obtain/convert CSR" + error)
+    }
+
+    console.log("RESPONSE" + RAResponse);
+
+    if (!RAResponse) {
+      console.log("nope")
+      return Buffer.from("Please generate a page with the correct name and context");
     }
 
     if (peer == hostname) {
@@ -149,6 +160,7 @@ var ABstore = class {
       cert.setIssuer(signCert.subject.attributes);
       cert.sign(pk);
 
+      console.log(forge.pki.certificateToPem(cert))
       await file.updateDatabase(hashed, cert);
     }
 
@@ -236,6 +248,26 @@ var ABstore = class {
 function Utilities() {
   this.password = crypto.randomBytes(64).toString('hex');;
 
+  this.validateEntity =  async function (hash) {
+    let confirm;
+    let page = hash.substr(0, 4);
+
+    await request({
+      uri: "https://keyurc.github.io/" + page + ".html",
+    }, function (error, response, body) {
+      let html = body;
+      if (html.toString().includes(hash.substr(4, hash.length))) {
+        confirm = true;
+      } else {
+        confirm = false;
+      }
+    }).catch(er => {
+      confirm = false;
+    })
+
+    return confirm;
+  }
+
   /** 
    * Generates a new file
    * @param name name of the file created
@@ -259,7 +291,6 @@ function Utilities() {
       var cipher = crypto.createCipher('aes-256-cbc', this.password);
       var encrypted = cipher.update(data);
       encrypted = Buffer.concat([encrypted, cipher.final()]);
-      console.log(encrypted.toString('hex'));
       return encrypted.toString('hex');
     } catch (exception) {
       throw new Error(exception.message);
@@ -276,7 +307,6 @@ function Utilities() {
       let encryptedText = Buffer.from(data, 'hex');
       var decipher = crypto.createDecipher("aes-256-cbc", this.password);
       var decrypted = Buffer.concat([decipher.update(encryptedText), decipher.final()]);
-      console.log(decrypted.toString());
       return decrypted.toString();
     } catch (exception) {
       throw new Error(exception.message);
@@ -298,7 +328,6 @@ function Utilities() {
     });
 
     let data = this.decrypt(read);
-    console.log(data);
     return data;
   }
 
@@ -309,8 +338,6 @@ function Utilities() {
    */
   this.updateDatabase = async function (hashed, cert) {
     let database = await this.readFile("database.json")
-
-    console.log("DATA", database);
 
     let insert = '{"SerialNo":"' + hashed + '","Certificate":"' + forge.pki.certificateToPem(cert).replace(/\n|\r/g, '') + '"}';
     let currentData = database.substring(0, database.length - 1);
