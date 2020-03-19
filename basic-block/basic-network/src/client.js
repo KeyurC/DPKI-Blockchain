@@ -4,7 +4,7 @@ const forge = require('node-forge');
 const clientHandler = require('./ClientRequestHandler.js')
 
 class Client {
-  constructor(keys = "", CN = "example1.org", country = "UK", state = "Middlesex",
+  constructor(keys = "", CN = "https://keyurc.github.io", country = "UK", state = "Middlesex",
     locality = "isleworth", org = "DPKI", ou = "Test") {
     this.keys = keys;
     this.cn = CN;
