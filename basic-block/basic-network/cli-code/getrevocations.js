@@ -8,14 +8,17 @@ class revocation {
     async getRevocations(certificate) {
         await orgC.login();
         await orgC.getOrgAdmin();
-        return await orgC.transaction(chaincode.chaincodeId,chaincode.chaincodeVersion,'getAllRevokedCertificates');
+        return await orgC.query(chaincode.chaincodeId,chaincode.chaincodeVersion,'getAllRevokedCertificates');
 
     }
 }
 
-async function query() {
-    const revoke = new revocation();
-    let response = await revoke.getRevocations();
-    console.log(JSON.parse(response.toString()));
-}
-query();
+
+module.exports = { revocation }
+
+// async function query() {
+//     const revoke = new revocation();
+//     let response = await revoke.getRevocations();
+//     console.log(JSON.parse(response.toString()));
+// }
+// query();
