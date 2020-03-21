@@ -107,10 +107,12 @@ var ABstore = class {
   async invoke(stub, args) {
     let peer = args[0];
     let hashed = args[2];
+    let domain = "";
 
     try {
       let certreq = forge.pki.certificationRequestFromPem(args[1])
-      let domain = certreq.subject.attributes[0].value.toString();
+      domain = certreq.subject.attributes[0].value.toString();
+      let verify = await stub.getState(domain);
 
       ra.setValues(domain, hashed);
       let RAResponse = await ra.validateCSR();
@@ -119,21 +121,23 @@ var ABstore = class {
         return Buffer.from("Please generate a page with the correct name and context");
       }
 
-      if (peer == hostname) {
+      if (peer == hostname && verify.toString() == "") {
         let privateKey = await file.readFile('private.pem');
         let certificate = await file.readFile('certificate.pem')
 
         ca.setAllValues(domain, certreq, hashed, privateKey, certificate);
         let cert = ca.sign();
 
-        console.log(forge.pki.certificateToPem(cert))
         await file.updateDatabase(hashed, cert);
+
+        // return Buffer.from(forge.pki.certificateToPem(cert));
       }
-      await stub.putState(certreq.subject.attributes[0].value.toString(), Buffer.from(hashed));
     } catch (err) {
       console.log(err);
       return Buffer.from("Unable to complete transaction for certificate generation");
     }
+
+    await stub.putState(domain, Buffer.from(hashed));
   }
 
   /**
@@ -166,8 +170,9 @@ var ABstore = class {
     let keys = Object.keys(db);
 
     for (keys in db) {
-      let payload = Avalbytes;
-      let serial = db[keys].SerialNo;
+      let payload = Avalbytes.toString().trim();
+      let serial = db[keys].Serial.trim();
+
       if (serial == payload) {
         return Buffer.from(db[keys].Certificate);
       }
@@ -357,7 +362,7 @@ function Utilities() {
   this.updateDatabase = async function (hashed, cert) {
     let database = await this.readFile("database.json")
 
-    let insert = '{"SerialNo":"' + hashed + '","Certificate":"' + forge.pki.certificateToPem(cert).replace(/\n|\r/g, '') + '"}';
+    let insert = '{ "Serial":" ' + hashed + '","Certificate":"' + forge.pki.certificateToPem(cert).replace(/\n|\r/g, '') + '"}';
     let currentData = database.substring(0, database.length - 1);
     let newEntry = insert;
     let updated;
@@ -368,7 +373,7 @@ function Utilities() {
       updated = currentData + ',' + newEntry + ']';
     }
 
-    this.writeFile('database.json', updated)
+    this.writeFile('database.json', updated);
 
   }
 
