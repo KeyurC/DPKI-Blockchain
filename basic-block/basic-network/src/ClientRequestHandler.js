@@ -13,7 +13,6 @@ class ClientRequestHandler {
     constructor(CSR, domain) {
         this.request = CSR;
         this.domain = domain;
-        this.invokeChaincode();
     }
 
     /**
@@ -27,7 +26,6 @@ class ClientRequestHandler {
         let hashedSubject = this.generateHashOfCSR();
         let peer = await this.SelectPeer();
         await orgC.transaction(config.Org1.chaincode.chaincodeId, config.Org1.chaincode.dchaincodeVersion, 'invoke', peer, this.request, hashedSubject);
-
     }
 
     async SelectPeer() {
@@ -40,7 +38,7 @@ class ClientRequestHandler {
             });
         });
 
-        let peerList = JSON.parse(peers); 
+        let peerList = JSON.parse(peers);
         return peerList["Container1"].ID;
 
     }
