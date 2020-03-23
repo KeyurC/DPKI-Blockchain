@@ -61,4 +61,4 @@ class ClientRequestHandler {
         return hasedSubject;
     }
 }
-module.exports = { ClientRequestHandler }
+module.exports = ClientRequestHandler

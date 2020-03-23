@@ -1,11 +1,9 @@
 "use strict";
 
 const forge = require('node-forge');
-const clientHandler = require('./ClientRequestHandler.js')
-const Invoke = require('../cli-code/testQuery')
 
 class Client {
-  constructor(keys = "", CN , country, state,
+  constructor(keys = "", CN, country, state,
     locality, org, ou) {
     this.keys = keys;
     this.cn = CN;
@@ -16,32 +14,20 @@ class Client {
     this.ou = ou;
   }
 
-  async main() {
+  createRequest() {
     if (this.keys == "") {
-      this.generateKeyPair();
+      this.generateKeyPair()
     }
     let request = this.generateCSR();
-    const Handler = new clientHandler.ClientRequestHandler(request.certreq, request.cn);
-    await Handler.invokeChaincode();
-
-    let query = new Invoke.Invoke();
-    let response = await query.verify(request.cn);
-    if (typeof response == 'undefined') {
-      return "Failed verification, Please ensure that you have generated a new page, with the correct secret value";
-    } else {
-      return response;
-    }
+    return request;
   }
 
-  getResponse() {
-    return this.response;
-  }
 
   generateKeyPair() {
     this.keys = forge.pki.rsa.generateKeyPair(1024);
   }
 
-  get CertificateRequest() {
+  getCertificateRequest() {
     return this.CSR;
   }
 
@@ -80,5 +66,3 @@ class Client {
 }
 
 module.exports = Client;
-// const client  = new Client();
-// client.main();
