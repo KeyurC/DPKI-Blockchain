@@ -8,93 +8,70 @@
 
     <title> Blockchain PKI </title>
 
+    <!-- <link href="node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet"> -->
+    <script type="text/javascript" src="client.js"></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.10/css/all.css">
-    <src="https://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"> </head> <script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"></script>
+    <!-- <src="jquery.min.js"></script> -->
+</head>
+<script>
+    var request;
 
-        function getHash() {
-            let commonname = document.getElementById('common_name').value;
-            let country = document.getElementById('country').value;
-            let state = document.getElementById('state').value;
-            let locality = document.getElementById('locality').value;
-            let organization = document.getElementById('organization').value;
-            let department = document.getElementById('department').value;
-            let private_key = document.getElementById('private_key').value;
-            let public_key = document.getElementById('public_key').value;
+    function getHash() {
+        let commonname = document.getElementById('common_name').value;
+        let country = document.getElementById('country').value;
+        let state = document.getElementById('state').value;
+        let locality = document.getElementById('locality').value;
+        let organization = document.getElementById('organization').value;
+        let department = document.getElementById('department').value;
+        let private_key = document.getElementById('private_key').value;
+        let public_key = document.getElementById('public_key').value;
 
-            let keys = {
-                privateKey: private_key,
-                publicKey: public_key
-            }
-
-            let object = {
-                CN: commonname,
-                C: country,
-                S: state,
-                L: locality,
-                O: organization,
-                OU: department,
-                Keys: keys
-            }
-
-            $.ajax({
-                type: 'POST',
-                url: 'http://localhost:3000/getHash',
-                data: object,
-                dataType: 'text',
-                success: function (data) {
-                    let page = data.substr(0, 4);
-                    let secret = data.substr(4, data.length);
-                    let message = "Please create a new page called " + commonname + "/" + page
-                        + ".html, and have the contents of the page be " + secret;
-                    let modal = document.getElementById('warning').innerText = message;
-
-                }
-            });
-        }
-
-        function submission() {
-            let commonname = document.getElementById('common_name').value;
-            let country = document.getElementById('country').value;
-            let state = document.getElementById('state').value;
-            let locality = document.getElementById('locality').value;
-            let organization = document.getElementById('organization').value;
-            let department = document.getElementById('department').value;
-            let private_key = document.getElementById('private_key').value;
-            let public_key = document.getElementById('public_key').value;
-
-            let keys = {
-                privateKey: private_key,
-                publicKey: public_key
-            }
-
-            let object = {
-                CN: commonname,
-                C: country,
-                S: state,
-                L: locality,
-                O: organization,
-                OU: department,
-                Keys: keys
-            }
-
-            console.log(object);
-            $.ajax({
-                type: 'POST',
-                url: 'http://localhost:3000/newRequest',
-                data: object,
-                dataType: 'text',
-                error: function (data) {
-                    console.log(data)
-                }, success: function (data) {
-                    console.log(data);
-                    document.getElementById('certificate_area').innerText = data;
-                }
-            });
+        let keys = {
+            privateKey: private_key,
+            publicKey: public_key
         }
 
 
-    </script>
+        const client = new Client(keys, commonname, country, state,
+            locality, organization, department);
+        client.generateKeyPair();
+        request = client.createRequest();
+
+        $.ajax({
+            type: 'POST',
+            url: 'http://localhost:3000/getHash',
+            data: request,
+            dataType: 'text',
+            success: function (data) {
+                let page = data.substr(0, 4);
+                let secret = data.substr(4, data.length);
+                let message = "Please create a new page called " + commonname + "/" + page
+                    + ".html, and have the contents of the page be " + secret;
+                let modal = document.getElementById('warning').innerText = message;
+
+            }
+        });
+    }
+
+    function submission() {
+        $.ajax({
+            type: 'POST',
+            url: 'http://localhost:3000/newRequest',
+            data: request,
+            dataType: 'text',
+            error: function (data) {
+                console.log(data)
+            }, success: function (data) {
+                console.log(data);
+                document.getElementById('certificate_area').innerText = data;
+            }
+        });
+    }
+
+
+</script>
 
 <body>
 
@@ -119,7 +96,8 @@
             <!-- Collect the nav links, forms, and other content for toggling -->
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
-                    <li class="active"><a href="http://localhost:3000/index">New Certificate <span class="sr-only">(current)</span></a>
+                    <li class="active"><a href="http://localhost:3000/index">New Certificate <span
+                                class="sr-only">(current)</span></a>
                     </li>
                     <li><a href="http://localhost:3000/search">Search</a></li>
                     <li><a href="http://localhost:3000/revocation">Revocations</a></li>
@@ -167,10 +145,8 @@
             </div>
             <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal"
                 onclick="window.getHash()">Submit</button>
+            <textarea class="form-control" rows="15" id="certificate_area" type="text" readonly> </textarea>
         </form>
-
-        <textarea class="form-control" rows="15" id="certificate_area" type="text" placeholder="Readonly input here…"
-            readonly> </textarea>
     </div>
 
     <!-- Modal -->
