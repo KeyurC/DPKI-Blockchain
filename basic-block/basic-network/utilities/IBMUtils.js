@@ -74,9 +74,6 @@ class OrganizationClient extends EventEmitter {
     this._adminUser = null;
   }
 
-  async test() {
-    console.log("TEST " + this._channelName);
-  }
   async login() {
     try {
       this._client.setStateStore(
@@ -290,7 +287,8 @@ class OrganizationClient extends EventEmitter {
           args: marshalArgs(args),
           txId
         };
-        const results = await this._channel.sendInstantiateProposal(request);
+        //If it times out increase the time limit, depending on pc requires more computational power
+        const results = await this._channel.sendInstantiateProposal(request,240000);
         proposalResponses = results[0];
         proposal = results[1];
 
@@ -379,10 +377,11 @@ class OrganizationClient extends EventEmitter {
       const results = await this._channel.sendTransactionProposal(request);
       proposalResponses = results[0];
       proposal = results[1];
-      let tmp = proposalResponses[1].payload.toString();
-      if (tmp.includes("Please generate a page with the correct name and context")) {
-        console.log("Generate");
-      }
+
+      // let tmp = proposalResponses[1].payload.toString();
+      // if (tmp.includes("Please generate a page with the correct name and context")) {
+      //   console.log("Generate");
+      // }
       const allGood = proposalResponses
         .every(pr => pr.response && pr.response.status == 200);
 
@@ -400,7 +399,7 @@ class OrganizationClient extends EventEmitter {
       };
 
       await this._channel.sendTransaction(request);
-      let test = proposalResponses[0].response.payload;
+      let test = proposalResponses[0].payload.toString();
       return test;
     } catch (e) {
       throw e;
@@ -419,6 +418,7 @@ class OrganizationClient extends EventEmitter {
     let keys = Object.keys(responsePayloads);
     for (keys in responsePayloads) {
       let payload = responsePayloads[keys].toString();
+      // console.log(payload);
       if (payload.length > 40) {
         return unmarshalResult(responsePayloads[keys].toString());
       }
