@@ -1,14 +1,15 @@
 const utils = require('../utilities/IBMUtils.js');
 const {config} = require('../utilities/config.js');
-orgC = new utils.orgClient(config.Org2.channel.channelName,config.orderer0,config.Org2.peer,config.Org2.ca,config.Org2.admin);
+
+orgC2 = new utils.orgClient(config.Org2.channel.channelName,config.orderer0,config.Org2.peer,config.Org2.ca,config.Org2.admin);
 let chaincode = config.Org2.chaincode;
 
 class revocation {
     
     async getRevocations(certificate) {
-        await orgC.login();
-        await orgC.getOrgAdmin();
-        return await orgC.query(chaincode.chaincodeId,chaincode.chaincodeVersion,'getAllRevokedCertificates');
+        await orgC2.login();
+        await orgC2.getOrgAdmin();
+        return await orgC2.query(chaincode.chaincodeId,chaincode.chaincodeVersion,'getAllRevokedCertificates');
 
     }
 }
