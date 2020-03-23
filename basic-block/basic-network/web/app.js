@@ -1,19 +1,25 @@
 const network = require('../utilities/network-grapth')
-const Client = require('../src/client');
-const Invoke = require('../cli-code/testQuery');
+const Queries = require('../src/Interactions/Queries');
+const Certificate = require('../src/Interactions/Certificate')
+
 const express = require('express')
-var bodyParser = require('body-parser')
+const bodyParser = require('body-parser')
 const hash = require('object-hash');
-const app = express()
 const forge = require('node-forge');
 const path = require('path');
-// const revocationObj = require('../cli-code/getrevocations')
+
+const app = express();
+const queries = new Queries();
+
+
+//Server configuration
 
 app.use(bodyParser.urlencoded({ extended: false }))
 
 app.use(bodyParser.json())
 app.set('view engine', 'ejs')
 
+app.use(express.static('./src/'));
 app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
@@ -22,45 +28,48 @@ app.use(function (req, res, next) {
     next();
 });
 
+
+app.listen(3000, function () {
+    console.log('Example app listening on port 3000!')
+})
+
+//Post and Gets
+
 app.post('/newRequest', async (req, res) => {
-    let CSRData = JSON.parse(JSON.stringify(req.body));
-    const client = new Client(CSRData.PK, CSRData.CN, CSRData.C,
-        CSRData.S, CSRData.L, CSRData.O, CSRData.OU);
-    let test = await client.main();
-    res.send(test);
+    let clientInfo = JSON.parse(JSON.stringify(req.body));
+    const manager = new Certificate(clientInfo);
+    let cert = await manager.generateCertificate();
+    res.send(cert);
 })
 
 app.post('/getHash', function (req, res) {
-    let CSRData = JSON.parse(JSON.stringify(req.body));
-    const client = new Client(CSRData.keys, CSRData.CN, CSRData.C,
-        CSRData.S, CSRData.L, CSRData.O, CSRData.OU);
-    client.generateKeyPair();
-    let result = client.generateCSR()
-    let CSR = forge.pki.certificationRequestFromPem(result.certreq);
+    console.log(req.body);
+    let CSR = JSON.parse(JSON.stringify(req.body));
+    CSR = forge.pki.certificationRequestFromPem(CSR.certreq);
+    //Hashes the company information
     let subject = CSR.subject.attributes;
     let hasedSubject = hash(subject);
-    console.log(hasedSubject);
+
     res.send(hasedSubject);
 })
 
 app.post('/query', async (req,res) => {
     let data = JSON.parse(JSON.stringify(req.body));
-    const query = new Invoke.Invoke();
-    let response = await query.verify(data.CN);
+    let response = await queries.queryCADB(data.CN);
     res.send(response);
 })
 
 app.get('/getrevocations', async (req, res) => {
-    const revoke = new revocationObj.revocation();
-    let response = await revoke.getRevocations();
+    let response = await queries.queryRevocationsDB();
     res.send(response.toString());
 })
-
 
 app.get('/input', function (req, res) {
     let net = new network.network_graph()
     res.send(net.networkToJson());
 })
+
+//Pages
 
 app.get('/index', function (req, res) {
     res.sendFile(path.join(__dirname + '/src/index.html'));
@@ -74,6 +83,3 @@ app.get('/revocation', function (req, res) {
     res.sendFile(path.join(__dirname + '/src/revocations.html'));
 })
 
-app.listen(3000, function () {
-    console.log('Example app listening on port 3000!')
-})
