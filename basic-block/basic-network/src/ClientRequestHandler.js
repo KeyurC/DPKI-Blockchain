@@ -1,5 +1,6 @@
-const utils = require('../utilities/IBMUtils.js');
-const { config } = require('../utilities/config.js');
+const path = require('path');
+const utils = require(path.join(__dirname,'../utilities/IBMUtils.js'));
+const { config } = require(path.join(__dirname,'../utilities/config.js'));
 const forge = require('node-forge');
 const hash = require('object-hash');
 const fs = require('fs');
@@ -30,7 +31,7 @@ class ClientRequestHandler {
 
     async SelectPeer() {
         let peers = await new Promise((resolve, reject) => {
-            fs.readFile('../utilities/Containers.json', 'utf8', function (err, data) {
+            fs.readFile(path.join(__dirname,'../utilities/Containers.json'), 'utf8', function (err, data) {
                 if (err) {
                     reject(err);
                 }
