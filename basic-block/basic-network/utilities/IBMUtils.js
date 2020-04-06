@@ -11,6 +11,7 @@
 // - Add checkInstalled method for installed queries
 // - commented out instantiate eventhub as it left a handing await
 'use strict';
+const path = require('path');
 const resolve = require('path');
 const EventEmitter = require('events');
 const config = require('./config');
@@ -78,7 +79,7 @@ class OrganizationClient extends EventEmitter {
     try {
       this._client.setStateStore(
         await hfc.newDefaultKeyValueStore({
-          path: `../${this._peerConfig.peer0.hostname}`
+          path: path.join(__dirname,`../${this._peerConfig.peer0.hostname}`)
         }));
       this._adminUser = await getSubmitter(
         this._client, "admin", "adminpw", this._caConfig);
