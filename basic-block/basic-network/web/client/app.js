@@ -1,4 +1,3 @@
-const network = require('../../utilities/network-grapth')
 const Queries = require('../../src/Interactions/Queries');
 const Certificate = require('../../src/Interactions/Certificate')
 
@@ -37,7 +36,8 @@ app.listen(3000,'0.0.0.0', function () {
 
 app.post('/newRequest', async (req, res) => {
     let clientInfo = JSON.parse(JSON.stringify(req.body));
-    const manager = new Certificate(clientInfo);
+    console.log(clientInfo)
+    const manager = new Certificate(clientInfo,"true");
     let cert = await manager.generateCertificate();
     res.send(cert);
 })
