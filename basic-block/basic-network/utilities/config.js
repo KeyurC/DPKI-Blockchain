@@ -2,6 +2,9 @@ const { readFileSync } = require('fs');
 const path = require('path');
 const fs = require('fs');
 
+let org1AdminPath = path.resolve(__dirname, '../basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/');
+let org2AdminPath = path.resolve(__dirname, '../basic-network/crypto-config/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/keystore/');
+
 const config = {
   orderer0: {
     hostname: 'orderer.example.com',
@@ -16,8 +19,8 @@ const config = {
     },
     chaincode: {
       chaincodeId: 'abstore',
-      chaincodeVersion: 'v16',
-      chaincodePath: '../chaincode/certchain/javascript/'
+      chaincodeVersion: 'v21',
+      chaincodePath: path.resolve(__dirname, '../chaincode/certchain/javascript/')
     },
     peer: {
       peer0: {
@@ -42,7 +45,7 @@ const config = {
     },
     admin: {
       cert: readFileSync(path.resolve(__dirname, '../basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/admincerts/Admin@org1.example.com-cert.pem')),
-      key: readFileSync(path.resolve(__dirname, '../basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/8b5734a38bc5545a0ffd79fddad44dd2832396b2f8fdb50f8d21f045125e0370_sk'))
+      key: readFileSync(path.resolve(__dirname, '../basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/'+ keystore(org1AdminPath)))
     }
   },
 
@@ -55,7 +58,7 @@ const config = {
     chaincode: {
       chaincodeId: 'revocation',
       chaincodeVersion: 'v1',
-      chaincodePath: '../chaincode/revchain/javascript/'
+      chaincodePath: path.resolve(__dirname, '../chaincode/revchain/javascript/')
     },
     peer: {
       peer0: {
@@ -73,10 +76,15 @@ const config = {
     },
     admin: {
       cert: readFileSync(path.resolve(__dirname, '../basic-network/crypto-config/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/admincerts/Admin@org2.example.com-cert.pem')),
-      key: readFileSync(path.resolve(__dirname, '../basic-network/crypto-config/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/keystore/8bc29a28c4d4efc1b2837f64e1d6518070cfeb6387d70df8702aa9ad53685519_sk'))
+      key: readFileSync(path.resolve(__dirname, '../basic-network/crypto-config/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/keystore/'+keystore(org2AdminPath)))
     }
   }
 };
+
+function keystore(path) {
+  const arrayOfFiles = fs.readdirSync(path);
+  return arrayOfFiles[0];
+}
 
 const DEFAULT_CONTRACT_TYPES = [];
 

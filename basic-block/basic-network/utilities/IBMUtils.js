@@ -289,7 +289,7 @@ class OrganizationClient extends EventEmitter {
           txId
         };
         //If it times out increase the time limit, depending on pc requires more computational power
-        const results = await this._channel.sendInstantiateProposal(request,240000);
+        const results = await this._channel.sendInstantiateProposal(request,340000);
         proposalResponses = results[0];
         proposal = results[1];
 
@@ -313,7 +313,7 @@ class OrganizationClient extends EventEmitter {
           args: marshalArgs(args),
           txId
         };
-        const results = await this._channel.sendInstantiateProposal(request);
+        const results = await this._channel.sendInstantiateProposal(request,340000);
         proposalResponses = results[0];
         proposal = results[1];
 
