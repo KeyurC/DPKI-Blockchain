@@ -1,0 +1,307 @@
+<html>
+
+<head>
+    <title>SigmaJS example</title>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/sigma.core.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/conrad.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/utils/sigma.utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/utils/sigma.polyfills.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/sigma.settings.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/classes/sigma.classes.dispatcher.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/classes/sigma.classes.configurable.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/classes/sigma.classes.graph.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/classes/sigma.classes.camera.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/classes/sigma.classes.quad.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/classes/sigma.classes.edgequad.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/captors/sigma.captors.mouse.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/captors/sigma.captors.touch.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/renderers/sigma.renderers.canvas.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/renderers/sigma.renderers.webgl.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/renderers/sigma.renderers.svg.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/renderers/sigma.renderers.def.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/renderers/canvas/sigma.canvas.labels.def.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/renderers/canvas/sigma.canvas.hovers.def.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/renderers/canvas/sigma.canvas.nodes.def.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/renderers/canvas/sigma.canvas.edges.def.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/renderers/canvas/sigma.canvas.edges.curve.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/renderers/canvas/sigma.canvas.edges.arrow.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/renderers/canvas/sigma.canvas.edges.curvedArrow.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/renderers/canvas/sigma.canvas.edgehovers.def.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/renderers/canvas/sigma.canvas.edgehovers.curve.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/renderers/canvas/sigma.canvas.edgehovers.arrow.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/renderers/canvas/sigma.canvas.edgehovers.curvedArrow.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/renderers/canvas/sigma.canvas.extremities.def.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/middlewares/sigma.middlewares.rescale.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/middlewares/sigma.middlewares.copy.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/misc/sigma.misc.animation.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/misc/sigma.misc.bindEvents.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/misc/sigma.misc.bindDOMEvents.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/src/misc/sigma.misc.drawHovers.js"></script>
+    <!-- Sigma plugins -->
+    <script
+        src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/plugins/sigma.plugins.dragNodes/sigma.plugins.dragNodes.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/plugins/sigma.layout.forceAtlas2/supervisor.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma@1.2.1/plugins/sigma.layout.forceAtlas2/worker.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script type="text/javascript" src="client.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.10/css/all.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"></script>
+
+    <style type="text/css">
+        #container {
+            width: 100%;
+            height: 50%;
+            margin: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">Admin Control Centre</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+               
+            </div><!-- /.navbar-collapse -->
+        </div><!-- /.container-fluid -->
+    </nav>
+
+
+    <div id="container" style="display: block;"></div>
+    <div class="container">
+        <table class="table">
+            <thead class="thead-dark">
+                <tr>
+                    <th scope="col">Org</th>
+                    <th scope="col">Peers</th>
+                    <th scope="col">Chaincode</th>
+                    <th scope="col">Channel</th>
+                    <th scope="col">Certificate Authority</th>
+                </tr>
+            </thead>
+            <tbody id="grid">
+            </tbody>
+        </table>
+    </div>
+
+    <hr>
+    <div class="container">
+        <h1> Create new rovocation </h1>
+        <div>
+            <label for="domain">Domain:</label>
+            <input type="text" id = "domain" class="form-control">
+            <br>
+            <label for="serial">Serial:</label>
+            <input type="text" id = "serial" class="form-control">
+            <br>
+            <select id="CRLreasons" class="form-control form-control-sm">
+                <option value="unspecified">unspecified</option>
+                <option value="keyCompromise">keyCompromise</option>
+                <option value="cACompromise">cACompromise</option>
+                <option value="affiliationChanged">affiliationChanged</option>
+                <option value="superseded">superseded</option>
+                <option value="cessationOfOperation">cessationOfOperation</option>
+                <option value="certificateHold">certificateHold</option>
+                <option value="removeFromCRL">removeFromCRL</option>
+                <option value="privilegeWithdrawn">privilegeWithdrawn</option>
+                <option value="aACompromise">aACompromise</option>
+            </select>
+            <br>
+            <button class="btn btn-primary" onclick="revoke()">revoke</button>
+            <p class="help-block" id = "revocationresponse"></p>
+        </div>
+
+    </div>
+
+    <hr>
+    <div class="container">
+        <h1> Blockchain Controls </h1>
+        <h4> view chaincode </h4>
+        <select id="chaincodes" class="form-control form-control-sm">
+            <option value="certchain/javascript/abstore">certchain</option>
+            <option value="revchain/javascript/revocation">revchain</option>
+        </select>
+        <br>
+        <button type="submit" class="btn btn-primary" onclick="getchaincode()">load chaincode</button>
+        <br>
+        <div class="form-group">
+            <p id='target' style='white-space:pre'></p>
+        </div>
+        
+        <hr>
+        <h4> upload new chaincode </h4>
+        <div class="form-group">
+            <label for="chaincodeFile">File input</label>
+            <input type="file" id="chaincodeFile">
+            <p class="help-block">Restart network after upload for chaincode to take impact.</p>
+        </div>
+        <hr>
+        <h4> Start network </h4>
+        <button type="submit" class="btn btn-primary" onclick="start()">Start</button>
+        <hr>
+        <h4> Restart network </h4>
+        <button type="submit" class="btn btn-primary" onclick="restart()">Restart</button>
+        <hr>
+        <h4> Stop network </h4>
+        <button type="submit" class="btn btn-primary" onclick="stop()">Stop</button>
+        <hr>
+    </div>
+
+    <script>
+        //Code from https://stackoverflow.com/questions/16505333/get-the-data-of-uploaded-file-in-javascript
+        //Written by Mark Lagendijk
+        document.getElementById('chaincodeFile').addEventListener('change', handleFileSelect, false);
+
+        function handleFileSelect(event) {
+            const reader = new FileReader()
+            reader.onload = handleFileLoad;
+            reader.readAsText(event.target.files[0])
+        }
+
+        function handleFileLoad(event) {
+            document.getElementById('fileContent').textContent = event.target.result;
+            let value = document.getElementById("chaincodes").value;
+
+            $.ajax({
+                type: 'POST',
+                url: 'http://localhost:4000/uploadchaincode',
+                data: { 'address': value, 'code': event.target.result },
+                dataType: 'text',
+                success: function (data) {
+                    document.getElementById('target').innerText = data;
+                }
+            });
+        }
+
+        // Borrowed code ends here
+
+        function revoke() {
+            let domain = document.getElementById("domain").value;
+            let serial = document.getElementById("serial").value;
+            let reason = document.getElementById("CRLreasons").value;
+            
+            $.ajax({
+                type: 'POST',
+                url: 'http://localhost:4000/revoke',
+                data: { 'domain': domain, 'serial': serial, 'reason': reason},
+                dataType: 'text',
+                success: function (data) {
+                    console.log(data)
+                    document.getElementById("revocationresponse").innerHTML = data;
+                }
+            });
+
+        }
+
+        function restart() {
+            let value = document.getElementById("chaincodes").value;
+
+            $.ajax({
+                type: 'GET',
+                url: 'http://localhost:4000/restart',
+                dataType: 'text',
+                success: function (data) { }
+            });
+        }
+
+        function start() {
+            let value = document.getElementById("chaincodes").value;
+
+            $.ajax({
+                type: 'GET',
+                url: 'http://localhost:4000/start',
+                dataType: 'text',
+                success: function (data) { }
+            });
+        }
+
+        function stop() {
+            let value = document.getElementById("chaincodes").value;
+
+            $.ajax({
+                type: 'GET',
+                url: 'http://localhost:4000/stop',
+                dataType: 'text',
+                success: function (data) { }
+            });
+        }
+
+        function getchaincode() {
+            let value = document.getElementById("chaincodes").value;
+
+            $.ajax({
+                type: 'POST',
+                url: 'http://localhost:4000/getchaincode',
+                data: { 'address': value },
+                dataType: 'text',
+                success: function (data) {
+                    document.getElementById('target').innerText = data;
+                }
+            });
+        }
+
+        $.ajax({
+            type: 'GET',
+            url: 'http://localhost:4000/net_graph_JSON',
+            dataType: 'text',
+            success: function (data) {
+
+                var s = new sigma(
+                    {
+                        graph: JSON.parse(data),
+                        renderer: {
+                            container: document.getElementById('container'),
+                            type: sigma.renderers.canvas
+                        },
+                        settings: {
+                            minArrowSize: 10,
+                            zoomMin: 1,
+                            zoomMax: 1
+                        }
+                    }
+                );
+
+                let dragListener = sigma.plugins.dragNodes(s, s.renderers[0])
+            }
+        });
+
+        $.ajax({
+            type: 'GET',
+            url: 'http://localhost:4000/peerInfo',
+            dataType: 'text',
+            success: function (data) {
+                json = data.split(",");
+                console.log(json);
+                let entry1 = '<tr><th scope="row">' + json[0] + '</th><td>' + json[3] + '</td><td>' + json[2] + '</td><td>mychannel</td><td>' + json[5] + '</td></tr>';
+                let entry2 = '<tr><th scope="row">' + json[0] + '</th><td>' + json[4] + '</td><td>' + json[1] + '</td><td>mychannel</td><td>' + json[5] + '</td></tr>';
+                let entry3 = '<tr><th scope="row">' + json[6] + '</th><td>' + json[8] + '</td><td>' + json[7] + '</td><td>mychannel2</td><td>' + json[9] + '</td></tr>';
+                document.getElementById("grid").innerHTML += entry1;
+                document.getElementById("grid").innerHTML += entry2;
+                document.getElementById("grid").innerHTML += entry3;
+            }
+        });
+
+    </script>
+</body>
+
+</html>

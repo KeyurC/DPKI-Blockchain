@@ -1,0 +1,22 @@
+{
+	"name": "abstore",
+	"version": "1.0.0",
+	"description": "ABstore chaincode implemented in node.js",
+	"engines": {
+		"node": ">=8.4.0",
+		"npm": ">=5.3.0"
+	},
+	"scripts": {
+		"start": "node abstore.js"
+	},
+	"engine-strict": true,
+	"license": "Apache-2.0",
+	"dependencies": {
+		"fabric-shim": "1.4.4",
+		"node-forge": "^0.9.1",
+		"object-hash": "^2.0.3",
+		"os": "^0.1.1",
+		"request": "^2.88.2",
+		"request-promise": "^4.2.5"
+	}
+}
