@@ -1,8 +1,0 @@
-[Config]
-
-Start DN
-CN,Enter your common name e.g google.com
-O,Enter organisation name
-OU,Enter organisation deparment
-C,Enter Country initials e.g UK
-End
