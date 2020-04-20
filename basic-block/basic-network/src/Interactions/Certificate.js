@@ -1,18 +1,27 @@
-const Client = require('../client');
 const ClientRequestHandler = require('../ClientRequestHandler');
 const Queries = require('./Queries');
+
 const query = new Queries();
 
+/**
+ * Function manages the creation of certificates,
+ * The function acts as an Adapter as it uses different functions
+ * and classes.
+ */
 class Certificate {
 
-    constructor(requestJson) {
+    constructor(requestJson, enabled) {
         this.request = requestJson.certreq;
         this.commonName = requestJson.cn;
+        this.RAEnabled = enabled;
     }
 
+    /**
+     * Function handles generation and retrieval of certificate
+     */
     async generateCertificate() {
         const handler = new ClientRequestHandler(this.request,
-            this.commonName);
+            this.commonName, this.RAEnabled);
 
         await handler.invokeChaincode();
         //Sleep needed for new chaincode to invoke

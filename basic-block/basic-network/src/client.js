@@ -2,6 +2,10 @@
 
 const forge = require('node-forge');
 
+/**
+ * This class is responsible for generating a CSR based on
+ * client information provided.
+ */
 class Client {
   constructor(keys = "", CN, country, state,
     locality, org, ou) {
@@ -14,6 +18,9 @@ class Client {
     this.ou = ou;
   }
 
+  /**
+   * Function generates a CSR request
+   */
   createRequest() {
     if (this.keys == "") {
       this.generateKeyPair()
@@ -22,15 +29,23 @@ class Client {
     return request;
   }
 
-
+  /**
+   * Function generates a pair of private and public keys
+   */
   generateKeyPair() {
     this.keys = forge.pki.rsa.generateKeyPair(1024);
   }
 
+  /**
+   * Returns the CSR 
+   */
   getCertificateRequest() {
     return this.CSR;
   }
 
+  /**
+   * Function generates a CSR request
+   */
   generateCSR() {
     var certificateReq = forge.pki.createCertificationRequest();
     certificateReq.publicKey = this.keys.publicKey;

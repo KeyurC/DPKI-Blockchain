@@ -1,6 +1,6 @@
 const path = require('path');
-const utils = require(path.join(__dirname,'../utilities/IBMUtils.js'));
-const { config } = require(path.join(__dirname,'../utilities/config.js'));
+const utils = require('../utilities/IBMUtils.js');
+const { config } = require('../utilities/config.js');
 const forge = require('node-forge');
 const hash = require('object-hash');
 const fs = require('fs');
@@ -11,9 +11,10 @@ const fs = require('fs');
  */
 class ClientRequestHandler {
 
-    constructor(CSR, domain) {
+    constructor(CSR, domain, enabled) {
         this.request = CSR;
         this.domain = domain;
+        this.RAEnabled = enabled;
     }
 
     /**
@@ -26,9 +27,13 @@ class ClientRequestHandler {
         await orgC.getOrgAdmin();
         let hashedSubject = this.generateHashOfCSR();
         let peer = await this.SelectPeer();
-        await orgC.transaction(config.Org1.chaincode.chaincodeId, config.Org1.chaincode.dchaincodeVersion, 'invoke', peer, this.request, hashedSubject);
+        await orgC.transaction(config.Org1.chaincode.chaincodeId, config.Org1.chaincode.dchaincodeVersion, 'invoke', peer, this.request, hashedSubject, this.RAEnabled);
     }
 
+    /**
+     * Function chooses a random peer which will be responsible for signing
+     * certificates
+     */
     async SelectPeer() {
         let peers = await new Promise((resolve, reject) => {
             fs.readFile(path.join(__dirname,'../utilities/Containers.json'), 'utf8', function (err, data) {
@@ -38,9 +43,11 @@ class ClientRequestHandler {
                 resolve(data);
             });
         });
-
+        let selected = Math.floor(Math.random() * 2) + 1
         let peerList = JSON.parse(peers);
-        return peerList["Container1"].ID;
+        let join = "Container"+selected.toString();
+        console.log(join);
+        return peerList[join].ID;
 
     }
 
@@ -54,11 +61,14 @@ class ClientRequestHandler {
         return chaincode1;
     }
 
+    /**
+     * The Function generates a hash of the company information within the
+     * CSR.
+     */
     generateHashOfCSR() {
         let CSR = forge.pki.certificationRequestFromPem(this.request);
         let subject = CSR.subject.attributes;
         let hasedSubject = hash(subject);
-        console.log(hasedSubject);
         return hasedSubject;
     }
 }

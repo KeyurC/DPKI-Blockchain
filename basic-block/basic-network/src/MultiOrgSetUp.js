@@ -1,9 +1,11 @@
-const utils = require('../utilities/IBMUtils.js');
-const { config } = require('../utilities/config.js');
-const CA = require('./CA.js');
-const fs = require('fs');
-const chalk = require('chalk');
 const { Docker } = require('node-docker-api');
+const path = require('path');
+const fs = require('fs');
+
+const CA = require(path.resolve(__dirname, './CA.js'));
+const { config } = require(path.resolve(__dirname, "../utilities/config.js"));
+const utils = require(path.resolve(__dirname, "../utilities/IBMUtils.js"));
+
 const docker = new Docker();
 
 let channelConfig = [];
@@ -26,6 +28,9 @@ chaincode1 = new utils.orgClient(channelName[0], config.orderer0,
 chaincode2 = new utils.orgClient(channelName[1], config.orderer0,
     config.Org2.peer, config.Org2.ca, config.Org2.admin);
 
+/**
+ * Function creates a new admin user from both chaincodes
+ */
 async function getAdminOrgs() {
     return Promise.all([
         chaincode1.getOrgAdmin(),
@@ -33,6 +38,9 @@ async function getAdminOrgs() {
     ]);
 }
 
+/**
+ * Function creates a new wallet for both chaincodes
+ */
 async function Login() {
     await Promise.all([
         chaincode1.login(),
@@ -40,6 +48,10 @@ async function Login() {
     ]);
 }
 
+/**
+ * Function sets up the blockchain and install the correct chaincodes onto
+ * the correct entities and peers on the network.
+ */
 async function setUP() {
     await Login();
     await getAdminOrgs();
@@ -173,7 +185,7 @@ async function setUP() {
 
             }
             
-            fs.writeFileSync('../utilities/Containers.json', JSON.stringify(containersJson),'utf8', function (err) {
+            fs.writeFileSync(path.resolve(__dirname,'../utilities/Containers.json'), JSON.stringify(containersJson),'utf8', function (err) {
                 if (err) console.log(err);
                 console.log('File is created successfully.');
             });

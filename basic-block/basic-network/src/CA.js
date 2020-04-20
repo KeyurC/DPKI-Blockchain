@@ -2,16 +2,27 @@
 
 const forge = require('node-forge');
 
+/**
+ * The class is responsible for generating signing certificates responsible
+ * for the PKI hierarchy. 
+ */
 class CA {
     constructor(keys = "") {
         this.keys = keys;
         this.CA = null;
     }
 
+    /**
+     * The function generates public and private key pair
+     */
     generateKeyPair() {
         this.keys = forge.pki.rsa.generateKeyPair(1024);
     }
 
+    /**
+     * Function creates a self signed certificate, which will act
+     * as the ROOT Certificate.
+     */
     selfsign() {
         var cert = forge.pki.createCertificate();
         cert.publicKey = this.keys.publicKey;
@@ -48,10 +59,14 @@ class CA {
               certificate: forge.pki.certificateToPem(cert)
           };
 
-          // could encrypt private key
           return this.CA;
     }
 
+    /**
+     * Function generates intermediate certificates based on a Self-Signed ROOT
+     * Certificate, 
+     * @param {integer} number 
+     */
     generateSubCA(number) {
       let subCaList = [];
 

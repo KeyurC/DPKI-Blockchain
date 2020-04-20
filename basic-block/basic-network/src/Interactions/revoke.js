@@ -1,5 +1,7 @@
-const utils = require('../utilities/IBMUtils.js');
-const { config } = require('../utilities/config.js');
+const path = require('path');
+const queries = require("./Queries");
+const utils = require('../../utilities/IBMUtils');
+const { config } = require('../../utilities/config.js');
 
 /**
  * Class is responsible for communicating with the blockchain,
@@ -11,7 +13,6 @@ class revocation {
         this.domain = domain;
         this.serial = serial;
         this.reason = reason;
-        this.invokeChaincode();
     }
 
     /**
@@ -19,11 +20,18 @@ class revocation {
      * to be signed and stored in the blockchain.
      */
     async invokeChaincode() {
+        let query = new queries();
         const orgC = this.constructOrgClient();
         await orgC.login();
         await orgC.getOrgAdmin();
-        await orgC.transaction(config.Org2.chaincode.chaincodeId, config.Org2.chaincode.dchaincodeVersion, 'invoke', this.domain, this.serial, this.reason);
 
+        let response = await query.queryCADB(this.domain);
+        if (typeof response != 'undefined') {
+            await orgC.transaction(config.Org2.chaincode.chaincodeId, config.Org2.chaincode.dchaincodeVersion, 'invoke', this.domain, this.serial, this.reason);
+            return "Success";
+        } else {
+            return "Failed";
+        }
     }
 
     /**
@@ -38,6 +46,6 @@ class revocation {
 
 }
 
-module.exports = { revocation }
+module.exports = revocation
 
-revoke = new revocation("example1.org","eff36db759de424bd696361afdccfd14a2a92a26","keyCompromise")
+// revoke = new revocation("example1.org","eff36db759de424bd696361afdccfd14a2a92a26","keyCompromise")
