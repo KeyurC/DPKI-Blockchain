@@ -148,7 +148,7 @@
                 <label>Private key</label>
                 <textarea class="form-control" id="private_key" rows="3"></textarea>
             </div>
-            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal"
+            <button type="button" id = "CSRSubmit" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal"
                 onclick="window.getHash()"> <i id = "spinner" class = ""></i> Submit</button>
             <textarea class="form-control" rows="15" id="certificate_area" type="text" readonly> </textarea>
         </form>
@@ -170,7 +170,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" onclick="window.submission()"
+                    <button type="button" class="btn btn-primary" id = "submissionbtn" onclick="window.submission()"
                         data-dismiss="modal">Save changes</button>
                 </div>
             </div>
