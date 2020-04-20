@@ -107,14 +107,16 @@ var ABstore = class {
   async invoke(stub, args) {
     let peer = args[0];
     let hashed = args[2];
+    let enabled = args[3];
+    console.log("TEST" + enabled);
     let domain = "";
 
     try {
       let certreq = forge.pki.certificationRequestFromPem(args[1])
       domain = certreq.subject.attributes[0].value.toString();
       let verify = await stub.getState(domain);
-
-      ra.setValues(domain, hashed);
+      console.log(enabled);
+      ra.setValues(domain, hashed, enabled);
       let RAResponse = await ra.validateCSR();
 
       if (!RAResponse) {
@@ -251,7 +253,8 @@ function RegistrationAuthority() {
     return objectHash(domain);
   }
 
-  this.setValues = function (domain, hash) {
+  this.setValues = function (domain, hash, enabled) {
+    this.enabled = enabled;
     this.hash = hash;
     this.domain = this.setDomain(domain);
   }
@@ -277,8 +280,13 @@ function RegistrationAuthority() {
       validated = false;
     })
 
-    return validated;
+    console.log("ENABLING " + this.enabled.toString());
 
+    if (this.enabled.toString() == "true") {
+      return validated;
+    } else {
+      return true;
+    }
   }
 
 }
