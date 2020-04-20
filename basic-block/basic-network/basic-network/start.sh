@@ -26,4 +26,9 @@ export FABRIC_START_TIMEOUT=10
 #echo ${FABRIC_START_TIMEOUT}
 sleep ${FABRIC_START_TIMEOUT}
 
-
+echo 'Blockchain has started'
+echo 'Currently started docker instances'
+docker ps
+sleep 2
+echo 'Setting up Network'
+node ../src/MultiOrgSetUp.js
