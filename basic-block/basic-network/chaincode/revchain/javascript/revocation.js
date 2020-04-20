@@ -70,8 +70,12 @@ var Revocation = class {
         reason: reason
       }
 
-      file.writeFile("keys", updated);
-      await stub.putState(CN, Buffer.from(JSON.stringify(certificateRevocation)));
+      let result = await stub.getState(CN);
+      console.log(result.toString());
+      if (result.toString() == '') {
+        file.writeFile("keys", updated);
+        await stub.putState(CN, Buffer.from(JSON.stringify(certificateRevocation)));
+      }
 
     } catch (err) {
       console.log(err);
