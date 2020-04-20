@@ -17,7 +17,7 @@ services:
 
       - FABRIC_CA_SERVER_TLS_ENABLED=true
       - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org1.example.com-cert.pem
-      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/9d0b3b05679088dad369b8a00026fab12ed186b6988bea2fab79aa8769027b63_sk
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/d1ab71ec91a056616bdcdfa1e2ccc235190cff2169238f77be98dbb87b0faca9_sk
 
       # - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org1.example.com-cert.pem
       # - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/9d0b3b05679088dad369b8a00026fab12ed186b6988bea2fab79aa8769027b63_sk
@@ -38,7 +38,7 @@ services:
 
       - FABRIC_CA_SERVER_TLS_ENABLED=true
       - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org2.example.com-cert.pem
-      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/baf825d75d126a38fa8c0db1a801545ca62b41601dcac156c4e90ea9ea0cdca7_sk
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/26a3db0aac2f90608215a9f3202927abac53edf6b3aa08a81fc72966559a14e7_sk
 
       # - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org2.example.com-cert.pem
       # - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/baf825d75d126a38fa8c0db1a801545ca62b41601dcac156c4e90ea9ea0cdca7_sk

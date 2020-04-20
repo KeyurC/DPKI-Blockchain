@@ -11,7 +11,7 @@ const revocation = require('../src/Interactions/revoke');
 var expect = chai.expect;
 const query = new Queries();
 
-beforeEach(done => setTimeout(done, 1000));
+beforeEach(done => setTimeout(done, 2000));
 
 /**
  * The test determines if an improper domain, which does not exist can still be revoked, 
