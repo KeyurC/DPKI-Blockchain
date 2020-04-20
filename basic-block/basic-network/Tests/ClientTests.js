@@ -2,11 +2,11 @@ const chai = require('chai');
 const expect = chai.expect;
 const Client = require('../src/client.js');
 const forge = require('node-forge');
+const client = new Client("","example1.org","UK","Middlesex","Isleworth","DPKI","Test");
 
 //Test checks if private key is not null and undefined
 describe('KeyUndefinedTest', function () {
     it('Generate Keys should return a private and public key', function () {
-        const client = new Client();
         client.generateKeyPair();
         let pass = client.keys.publicKey !== null && client.keys.privatekey !== null;
         expect(pass).to.true;
@@ -16,7 +16,6 @@ describe('KeyUndefinedTest', function () {
 //Test passes if certificate request returned is not null/undefined
 describe('CSRUndefinedTest', function () {
     it('CSR should not be empty or undefined/null', function () {
-        const client = new Client();
         client.generateKeyPair();
         let cert = forge.pki.certificationRequestFromPem(client.generateCSR().certreq);
         let pass = cert !== null;
@@ -38,8 +37,7 @@ describe('KeyLengthTest', function () {
 //ensuring integrity
 describe('CertificateIntegrityTest', function () {
     it('Certificate request returned has wrong attributes', function () {
-        const certValue = ['example1.org','UK','Middlesex','isleworth','DPKI','Test']
-        const client = new Client();
+        const certValue = ['example1.org','UK','Middlesex','Isleworth','DPKI','Test']
         client.generateKeyPair();
         let cert = forge.pki.certificationRequestFromPem(client.generateCSR().certreq);
         let valid = true;
