@@ -76,60 +76,190 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="#">Brand</a>
+                <a class="navbar-brand" href="#">Admin Control Centre</a>
             </div>
 
             <!-- Collect the nav links, forms, and other content for toggling -->
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-                <ul class="nav navbar-nav">
-                    <li class="active"><a href="http://192.168.0.34:3000/index">New Certificate <span
-                                class="sr-only">(current)</span></a>
-                    </li>
-                    <li><a href="http://192.168.0.34:3000/search">Search</a></li>
-                    <li><a href="http://192.168.0.34:3000/revocation">Revocations</a></li>
-                </ul>
+               
             </div><!-- /.navbar-collapse -->
         </div><!-- /.container-fluid -->
     </nav>
 
 
     <div id="container" style="display: block;"></div>
-    Channel 1
     <div class="container">
         <table class="table">
             <thead class="thead-dark">
                 <tr>
-                    <th scope="col">#</th>
+                    <th scope="col">Org</th>
                     <th scope="col">Peers</th>
                     <th scope="col">Chaincode</th>
-                    <th scope="col">Orderer</th>
+                    <th scope="col">Channel</th>
+                    <th scope="col">Certificate Authority</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr>
-                    <th scope="row">1</th>
-                    <td>Mark</td>
-                    <td>Otto</td>
-                    <td>@mdo</td>
-                </tr>
-                <tr>
-                    <th scope="row">2</th>
-                    <td>Jacob</td>
-                    <td>Thornton</td>
-                    <td>@fat</td>
-                </tr>
-                <tr>
-                    <th scope="row">3</th>
-                    <td>Larry</td>
-                    <td>the Bird</td>
-                    <td>@twitter</td>
-                </tr>
+            <tbody id="grid">
             </tbody>
         </table>
     </div>
 
+    <hr>
+    <div class="container">
+        <h1> Create new rovocation </h1>
+        <div>
+            <label for="domain">Domain:</label>
+            <input type="text" id = "domain" class="form-control">
+            <br>
+            <label for="serial">Serial:</label>
+            <input type="text" id = "serial" class="form-control">
+            <br>
+            <select id="CRLreasons" class="form-control form-control-sm">
+                <option value="unspecified">unspecified</option>
+                <option value="keyCompromise">keyCompromise</option>
+                <option value="cACompromise">cACompromise</option>
+                <option value="affiliationChanged">affiliationChanged</option>
+                <option value="superseded">superseded</option>
+                <option value="cessationOfOperation">cessationOfOperation</option>
+                <option value="certificateHold">certificateHold</option>
+                <option value="removeFromCRL">removeFromCRL</option>
+                <option value="privilegeWithdrawn">privilegeWithdrawn</option>
+                <option value="aACompromise">aACompromise</option>
+            </select>
+            <br>
+            <button class="btn btn-primary" onclick="revoke()">revoke</button>
+            <p class="help-block" id = "revocationresponse"></p>
+        </div>
+
+    </div>
+
+    <hr>
+    <div class="container">
+        <h1> Blockchain Controls </h1>
+        <h4> view chaincode </h4>
+        <select id="chaincodes" class="form-control form-control-sm">
+            <option value="certchain/javascript/abstore">certchain</option>
+            <option value="revchain/javascript/revocation">revchain</option>
+        </select>
+        <br>
+        <button type="submit" class="btn btn-primary" onclick="getchaincode()">load chaincode</button>
+        <br>
+        <div class="form-group">
+            <p id='target' style='white-space:pre'></p>
+        </div>
+        
+        <hr>
+        <h4> upload new chaincode </h4>
+        <div class="form-group">
+            <label for="chaincodeFile">File input</label>
+            <input type="file" id="chaincodeFile">
+            <p class="help-block">Restart network after upload for chaincode to take impact.</p>
+        </div>
+        <hr>
+        <h4> Start network </h4>
+        <button type="submit" class="btn btn-primary" onclick="start()">Start</button>
+        <hr>
+        <h4> Restart network </h4>
+        <button type="submit" class="btn btn-primary" onclick="restart()">Restart</button>
+        <hr>
+        <h4> Stop network </h4>
+        <button type="submit" class="btn btn-primary" onclick="stop()">Stop</button>
+        <hr>
+    </div>
 
     <script>
+        //Code from https://stackoverflow.com/questions/16505333/get-the-data-of-uploaded-file-in-javascript
+        //Written by Mark Lagendijk
+        document.getElementById('chaincodeFile').addEventListener('change', handleFileSelect, false);
+
+        function handleFileSelect(event) {
+            const reader = new FileReader()
+            reader.onload = handleFileLoad;
+            reader.readAsText(event.target.files[0])
+        }
+
+        function handleFileLoad(event) {
+            document.getElementById('fileContent').textContent = event.target.result;
+            let value = document.getElementById("chaincodes").value;
+
+            $.ajax({
+                type: 'POST',
+                url: 'http://localhost:4000/uploadchaincode',
+                data: { 'address': value, 'code': event.target.result },
+                dataType: 'text',
+                success: function (data) {
+                    document.getElementById('target').innerText = data;
+                }
+            });
+        }
+
+        // Borrowed code ends here
+
+        function revoke() {
+            let domain = document.getElementById("domain").value;
+            let serial = document.getElementById("serial").value;
+            let reason = document.getElementById("CRLreasons").value;
+            
+            $.ajax({
+                type: 'POST',
+                url: 'http://localhost:4000/revoke',
+                data: { 'domain': domain, 'serial': serial, 'reason': reason},
+                dataType: 'text',
+                success: function (data) {
+                    console.log(data)
+                    document.getElementById("revocationresponse").innerHTML = data;
+                }
+            });
+
+        }
+
+        function restart() {
+            let value = document.getElementById("chaincodes").value;
+
+            $.ajax({
+                type: 'GET',
+                url: 'http://localhost:4000/restart',
+                dataType: 'text',
+                success: function (data) { }
+            });
+        }
+
+        function start() {
+            let value = document.getElementById("chaincodes").value;
+
+            $.ajax({
+                type: 'GET',
+                url: 'http://localhost:4000/start',
+                dataType: 'text',
+                success: function (data) { }
+            });
+        }
+
+        function stop() {
+            let value = document.getElementById("chaincodes").value;
+
+            $.ajax({
+                type: 'GET',
+                url: 'http://localhost:4000/stop',
+                dataType: 'text',
+                success: function (data) { }
+            });
+        }
+
+        function getchaincode() {
+            let value = document.getElementById("chaincodes").value;
+
+            $.ajax({
+                type: 'POST',
+                url: 'http://localhost:4000/getchaincode',
+                data: { 'address': value },
+                dataType: 'text',
+                success: function (data) {
+                    document.getElementById('target').innerText = data;
+                }
+            });
+        }
+
         $.ajax({
             type: 'GET',
             url: 'http://localhost:4000/net_graph_JSON',
@@ -152,6 +282,22 @@
                 );
 
                 let dragListener = sigma.plugins.dragNodes(s, s.renderers[0])
+            }
+        });
+
+        $.ajax({
+            type: 'GET',
+            url: 'http://localhost:4000/peerInfo',
+            dataType: 'text',
+            success: function (data) {
+                json = data.split(",");
+                console.log(json);
+                let entry1 = '<tr><th scope="row">' + json[0] + '</th><td>' + json[3] + '</td><td>' + json[2] + '</td><td>mychannel</td><td>' + json[5] + '</td></tr>';
+                let entry2 = '<tr><th scope="row">' + json[0] + '</th><td>' + json[4] + '</td><td>' + json[1] + '</td><td>mychannel</td><td>' + json[5] + '</td></tr>';
+                let entry3 = '<tr><th scope="row">' + json[6] + '</th><td>' + json[8] + '</td><td>' + json[7] + '</td><td>mychannel2</td><td>' + json[9] + '</td></tr>';
+                document.getElementById("grid").innerHTML += entry1;
+                document.getElementById("grid").innerHTML += entry2;
+                document.getElementById("grid").innerHTML += entry3;
             }
         });
 
